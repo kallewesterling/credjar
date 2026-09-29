@@ -1,0 +1,11 @@
+# app setup
+.env
+node_modules
+
+# Exports and per-run audit CSVs. These contain real names and email
+# addresses, so they live here and never in the repo root.
+public/data/*
+!public/data/.gitkeep
+
+# OS stuff
+.DS_Store

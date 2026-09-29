@@ -1,0 +1,25 @@
+{
+  "name": "credjar",
+  "version": "0.0.0",
+  "description": "Inspect, issue, and revoke Credly badges from the command line.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "templates": "node scripts/list-templates.mjs",
+    "badges": "node scripts/list-badges.mjs",
+    "issue": "node scripts/issue-badges.mjs",
+    "revoke": "node scripts/revoke-badges.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "Kalle Westerling",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "chalk": "^5.4.1",
+    "dotenv": "^16.4.7",
+    "yargs": "^17.7.2"
+  }
+}

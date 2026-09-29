@@ -1,0 +1,40 @@
+# Runs the unit tests on every pull request and on both long-lived branches.
+#
+# Every test here is offline: no Credly credentials, no network, no build
+# step. Nothing in this workflow should ever need a secret, and if it starts
+# to, that is a sign a test has grown a live dependency it should not have.
+name: test
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 20 is the oldest release supported (package.json engines); 22 is
+        # what most people will have.
+        node-version: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
