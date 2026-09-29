@@ -9,8 +9,9 @@
  *   1. Validate every input row. Any invalid row stops the run, so a file is
  *      fixed and rerun whole rather than half-issued.
  *   2. Read each template the rows use. It must exist and be active.
- *   3. Read each person's existing badges from that template, and set aside
- *      anyone who already holds it (pending or accepted).
+ *   3. Look for existing badges from that template by the person's email,
+ *      by any other email on their Credly profile, and by issuer_earner_id,
+ *      and set aside anyone who already holds it (pending or accepted).
  *   4. Show the plan. With --dry-run, stop here.
  *   5. Ask for the environment's name to be typed, unless --yes.
  *   6. POST one at a time, and write an audit CSV of every row's outcome.
@@ -25,7 +26,15 @@ import { createCredlyClient, describeError } from './credly-client.mjs';
 import { fetchOrganization, fetchBadgeTemplate, fetchIssuedBadges } from './credly-fetch.mjs';
 import { mapWithConcurrency } from './concurrency.mjs';
 import { parseCsv } from './csv.mjs';
-import { planIssues, splitDuplicates, checkTemplates, duplicateKey } from './issue-plan.mjs';
+import {
+  planIssues,
+  splitDuplicates,
+  checkTemplates,
+  duplicateKey,
+  duplicateSearches,
+  findHeld,
+  describeDuplicate
+} from './issue-plan.mjs';
 import {
   baseParser,
   confirmWrite,
@@ -156,17 +165,24 @@ async function main() {
     process.exit(1);
   }
 
-  // 3. Who already holds the badge.
-  const existing = new Map();
+  // 3. Who already holds the badge, by any of the rules Credly uses.
+  const held = new Map();
+  const problems = [];
   await mapWithConcurrency(planned, READ_CONCURRENCY, async ({ payload }) => {
-    const found = await fetchIssuedBadges(client, {
-      filter: { recipient_email: payload.recipient_email, badge_template_id: payload.badge_template_id }
-    });
-    // The filter is a server-side match; confirm it locally, case-insensitively.
-    const key = duplicateKey(payload.recipient_email, payload.badge_template_id);
-    existing.set(key, found.filter((b) => duplicateKey(b.recipient_email, b.badge_template?.id) === key));
+    const results = [];
+    for (const { kind, filter } of duplicateSearches(payload)) {
+      results.push({ kind, badges: await fetchIssuedBadges(client, { filter }) });
+    }
+    const { held: h, problem } = findHeld(payload, results);
+    if (problem) problems.push(problem);
+    held.set(duplicateKey(payload.recipient_email, payload.badge_template_id), h);
   });
-  const { toIssue: fresh, duplicates } = splitDuplicates(planned, existing);
+  if (problems.length) {
+    for (const p of problems) console.error(fail(p));
+    console.error(fail('Nothing was sent.'));
+    process.exit(1);
+  }
+  const { toIssue: fresh, duplicates } = splitDuplicates(planned, held);
   const toIssue = argv.allowDuplicate ? planned : fresh;
   const skipped = argv.allowDuplicate ? [] : duplicates;
 
@@ -179,7 +195,7 @@ async function main() {
         : skip(`${duplicates.length} already hold this badge and will be skipped:`)
     );
     for (const d of duplicates) {
-      console.log(muted(`    ${d.payload.recipient_email}  ${name(d.payload.badge_template_id)}  (${d.existing.state}, ${d.existing.id})`));
+      console.log(muted(`    ${d.payload.recipient_email}  ${name(d.payload.badge_template_id)}  ${describeDuplicate(d)}`));
     }
   }
   console.log(chalk.bold(`\n${toIssue.length} badge${toIssue.length === 1 ? '' : 's'} to issue:`));
@@ -214,7 +230,7 @@ async function main() {
   }
 
   // 6. Write, one at a time.
-  const audit = skipped.map((d) => auditRow(d, 'skipped', d.existing.id, `already ${d.existing.state}`));
+  const audit = skipped.map((d) => auditRow(d, 'skipped', d.existing.id, describeDuplicate(d)));
   let issued = 0;
   let failed = 0;
   let stopped = false;

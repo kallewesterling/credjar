@@ -123,8 +123,11 @@ Before anything is sent:
    Fix the file and run it again.
 2. **Every template must exist and be active.**
 3. **People who already hold the badge are skipped.** That means a pending
-   or accepted badge from the same template. People whose badge was revoked
-   or rejected get a new one. `--allow-duplicate` overrides this.
+   or accepted badge from the same template, matched the way Credly matches
+   duplicates: the same email, any other email on the person's Credly
+   profile, or the same `issuer_earner_id`. The plan says which rule
+   matched. People whose badge was revoked or rejected get a new one.
+   `--allow-duplicate` overrides this.
 4. **The plan is shown.** With `--dry-run`, the command stops here.
 5. **You type `sandbox` or `production` to continue.** `--yes` skips this
    step, for scripts.
