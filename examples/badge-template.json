@@ -1,0 +1,20 @@
+{
+  "name": "credjar test badge",
+  "description": "A badge template for testing credjar against the Credly sandbox. Not for real earners.",
+  "state": "active",
+  "skills": ["Testing", "Credly API", "Automation"],
+  "badge_template_activities": [
+    {
+      "activity_type": "Course",
+      "title": "Ran credjar against the sandbox",
+      "activity_url": "https://github.com/kallewesterling/credjar"
+    }
+  ],
+  "global_activity_url": "https://github.com/kallewesterling/credjar",
+  "level": "Foundational",
+  "type_category": "Learning",
+  "time_to_earn": "Hours",
+  "cost": "Free",
+  "public": false,
+  "allow_duplicate_badges": false
+}

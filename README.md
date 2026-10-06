@@ -54,6 +54,7 @@ npm run check
 | `npm run check` | Confirms the credentials work and shows which organization and environment they point at | No |
 | `npm run templates` | Lists badge templates and their ids | No |
 | `npm run badges` | Lists issued badges, optionally as CSV | No |
+| `npm run templates:create` | Creates a badge template from a JSON file and a PNG | **Yes** |
 | `npm run issue` | Issues badges | **Yes** |
 | `npm run revoke` | Revokes badges | **Yes** |
 
@@ -103,6 +104,28 @@ npm run templates
 npm run templates -- --state active
 npm run templates -- --name "Intro" --csv
 ```
+
+### Create a badge template
+
+```bash
+npm run templates:create -- --sandbox \
+  --file examples/badge-template.json --image badge.png --dry-run
+```
+
+The JSON file describes the template. `examples/badge-template.json` shows
+every field credjar accepts. Credly requires a `name`, a `description` of
+500 characters or fewer, at least three `skills`, at least one earning
+criterion in `badge_template_activities`, and a PNG image of at least
+600×600. You can pass the image as `--image`, or as `image_url` in the file.
+
+All of this is checked before anything is sent, and an unknown field is an
+error, so a misspelt field name can't be silently dropped. The command
+refuses if a template with the same name already exists, asks for typed
+confirmation, reads the new template back to check it, and writes an audit
+CSV.
+
+Set `"state": "active"` to issue from the template straight away, or
+`"draft"` to finish it in the Credly UI first.
 
 ### List issued badges
 

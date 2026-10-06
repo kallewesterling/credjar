@@ -35,6 +35,10 @@ and version scheme in `CLAUDE.md`.
   It never falls back to the production settings, and always uses the
   sandbox host.
 
+- `npm run templates:create` creates a badge template from a JSON file and
+  a PNG. It checks Credly's requirements locally, refuses unknown fields and
+  duplicate names, and reads the template back to verify it.
+
 ### Fixed
 
 - `issue`'s duplicate check compared only the exact email, but Credly also
