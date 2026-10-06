@@ -59,7 +59,12 @@ npm run check
 | `npm run revoke` | Revokes badges | **Yes** |
 
 Pass options after `--`, for example `npm run badges -- --state accepted`.
-Every command takes `--help`.
+Every command takes `--help`. In the examples, `TEMPLATE_ID` and `BADGE_ID`
+stand for the ids that `npm run templates` and `npm run badges` print.
+
+npm prints each command before running it, and it masks anything shaped
+like a UUID as `***` in that line, because old npm access tokens were UUIDs.
+So `--template ***` in npm's echo is expected. credjar receives the real id.
 
 ### `--sandbox`
 
@@ -68,7 +73,7 @@ Every command takes `--sandbox`, which runs it against the Credly sandbox
 
 ```bash
 npm run check -- --sandbox
-npm run issue -- --sandbox --template <id> --in people.csv --dry-run
+npm run issue -- --sandbox --template TEMPLATE_ID --in people.csv --dry-run
 ```
 
 - **It never falls back to the production settings.** If a sandbox setting
@@ -77,9 +82,15 @@ npm run issue -- --sandbox --template <id> --in people.csv --dry-run
   production token in the sandbox settings fails with a 401 and can't reach
   production. If `CREDLY_SANDBOX_ENV` is set to anything other than
   `sandbox`, the command refuses to run.
-- **The sandbox doesn't email recipients.** It sends every badge
-  notification to the organization's technical contact, which is set under
-  Account → Profile in the sandbox.
+- **The sandbox doesn't email recipients.** It sends every email,
+  including badge notifications and address confirmations, to the
+  organization's technical contact, which is set under Account → Profile
+  in the sandbox.
+- **To accept a sandbox badge, its address has to be confirmed on your
+  account.** Accepting a badge issued to `you+test1@…` while signed in as
+  `you@…` asks you to confirm `you+test1@…`. The confirmation goes to the
+  technical contact, and confirming adds the address to your account as a
+  second email.
 
 Credly asks that you don't use real earners' data in the sandbox. Use test
 addresses you control.
@@ -130,7 +141,7 @@ Set `"state": "active"` to issue from the template straight away, or
 ### List issued badges
 
 ```bash
-npm run badges -- --template <template_id>
+npm run badges -- --template TEMPLATE_ID
 npm run badges -- --email ada@example.com
 npm run badges -- --state pending,accepted --since 2026-01-01 --csv
 ```
@@ -143,14 +154,14 @@ npm run badges -- --state pending,accepted --since 2026-01-01 --csv
 To one person:
 
 ```bash
-npm run issue -- --template <template_id> \
+npm run issue -- --template TEMPLATE_ID \
   --email ada@example.com --first-name Ada --last-name Lovelace --dry-run
 ```
 
 To a CSV of people:
 
 ```bash
-npm run issue -- --template <template_id> --in people.csv --dry-run
+npm run issue -- --template TEMPLATE_ID --in people.csv --dry-run
 ```
 
 The CSV needs `email`, `first_name` and `last_name` columns. It can also
@@ -189,7 +200,7 @@ Before anything is sent:
 ### Revoke badges
 
 ```bash
-npm run revoke -- --badge <badge_id> --reason "Issued in error" --dry-run
+npm run revoke -- --badge BADGE_ID --reason "Issued in error" --dry-run
 npm run revoke -- --in badges.csv --reason "Issued in error" --dry-run
 ```
 
