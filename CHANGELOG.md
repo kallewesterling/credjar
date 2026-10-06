@@ -29,3 +29,14 @@ and version scheme in `CLAUDE.md`.
 - An API client that strips credentials from every error, and never retries
   a POST after a server error.
 - Offline test suite and a CI workflow running it on Node 20 and 22.
+
+### Fixed
+
+- `issue`'s duplicate check compared only the exact email, but Credly also
+  counts a badge as a duplicate if it goes to the same Credly user under
+  another email, or has the same `issuer_earner_id`. Those people passed
+  the preflight. On templates that allow duplicates they got a second badge
+  and a second email; on others, Credly's 422 stopped it. The check now
+  searches all three ways, says which rule matched, and stops before
+  sending anything if Credly's search results can't be trusted. A CSV that
+  repeats an `issuer_earner_id` for the same template is also refused.
