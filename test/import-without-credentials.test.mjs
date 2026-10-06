@@ -21,6 +21,9 @@ function importWithoutCredentials(relativeModule) {
   delete env.CREDLY_API_TOKEN;
   delete env.CREDLY_ORG_ID;
   delete env.CREDLY_ENV;
+  delete env.CREDLY_SANDBOX_API_TOKEN;
+  delete env.CREDLY_SANDBOX_ORG_ID;
+  delete env.CREDLY_SANDBOX_ENV;
 
   const url = pathToFileURL(path.join(root, relativeModule)).href;
   try {

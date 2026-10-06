@@ -127,42 +127,78 @@ export function failCleanly(err, context) {
   const status = err?.response?.status;
   console.error(chalk.red(`\n✗ ${context}`));
   console.error(chalk.red(`   ${describeError(err)}`));
+  // Which settings to point at depends on --sandbox, which this function
+  // can't see, so name both sets.
   if (status === 401 || status === 403) {
-    console.error(chalk.yellow('   Check CREDLY_API_TOKEN and CREDLY_ENV in .env. A sandbox token'));
-    console.error(chalk.yellow('   does not work in production, or the other way round.'));
+    console.error(chalk.yellow('   Check the token in .env: CREDLY_API_TOKEN, or CREDLY_SANDBOX_API_TOKEN'));
+    console.error(chalk.yellow('   with --sandbox. A sandbox token does not work in production, or the'));
+    console.error(chalk.yellow('   other way round.'));
   }
   if (status === 404) {
-    console.error(chalk.yellow('   Check CREDLY_ORG_ID in .env, and that it belongs to CREDLY_ENV.'));
+    console.error(chalk.yellow('   Check the organization ID in .env: CREDLY_ORG_ID, or CREDLY_SANDBOX_ORG_ID'));
+    console.error(chalk.yellow('   with --sandbox. An organization ID belongs to one environment only.'));
   }
   process.exit(1);
 }
 
 /**
+ * The settings each mode reads. `--sandbox` switches every one of them, so a
+ * sandbox run and a production run never share a credential.
+ */
+export const SETTING_NAMES = {
+  default: { token: 'CREDLY_API_TOKEN', orgId: 'CREDLY_ORG_ID', environment: 'CREDLY_ENV' },
+  sandbox: { token: 'CREDLY_SANDBOX_API_TOKEN', orgId: 'CREDLY_SANDBOX_ORG_ID', environment: 'CREDLY_SANDBOX_ENV' }
+};
+
+/**
  * Reads and checks the three settings every command needs. Throws, with a
  * message naming the missing setting, rather than letting a request go out
  * to the wrong place.
+ *
+ * With `sandbox`, only the CREDLY_SANDBOX_* settings are read, and a missing
+ * one is an error, never a fallback to its production counterpart. The
+ * environment is fixed to sandbox, so CREDLY_SANDBOX_ENV is optional, but if
+ * it is set and says anything else, that's a contradiction worth stopping
+ * for, not something to resolve by guessing. Because the host is fixed too,
+ * a production token pasted into the sandbox settings can only fail with a
+ * 401; it can't reach production.
  */
-export function readConfig(env = process.env) {
-  const token = env.CREDLY_API_TOKEN;
-  const orgId = env.CREDLY_ORG_ID;
-  const environment = env.CREDLY_ENV;
+export function readConfig(env = process.env, { sandbox = false } = {}) {
+  const names = sandbox ? SETTING_NAMES.sandbox : SETTING_NAMES.default;
+  const token = env[names.token];
+  const orgId = env[names.orgId];
+  const fallbackNote = sandbox ? ' --sandbox never falls back to the production settings.' : '';
 
-  if (!token) throw new Error('CREDLY_API_TOKEN is not set. Add it to your .env file.');
-  if (!orgId) throw new Error('CREDLY_ORG_ID is not set. Add it to your .env file.');
-  // Required rather than defaulted: an unset value silently meaning
-  // production is how a test run issues real badges.
-  if (!environment) {
-    throw new Error('CREDLY_ENV is not set. Set it to "production" or "sandbox" in your .env file.');
-  }
-  if (!BASE_URLS[environment]) {
-    throw new Error(`CREDLY_ENV is "${environment}". It must be "production" or "sandbox".`);
+  if (!token) throw new Error(`${names.token} is not set. Add it to your .env file.${fallbackNote}`);
+  if (!orgId) throw new Error(`${names.orgId} is not set. Add it to your .env file.${fallbackNote}`);
+
+  let environment;
+  if (sandbox) {
+    const stated = env[names.environment];
+    if (stated && stated !== 'sandbox') {
+      throw new Error(
+        `${names.environment} is "${stated}", but --sandbox only talks to the sandbox. ` +
+          'Set it to "sandbox" or remove it.'
+      );
+    }
+    environment = 'sandbox';
+  } else {
+    environment = env[names.environment];
+    // Required rather than defaulted: an unset value silently meaning
+    // production is how a test run issues real badges.
+    if (!environment) {
+      throw new Error(`${names.environment} is not set. Set it to "production" or "sandbox" in your .env file.`);
+    }
+    if (!BASE_URLS[environment]) {
+      throw new Error(`${names.environment} is "${environment}". It must be "production" or "sandbox".`);
+    }
   }
   return { token, orgId, environment, baseURL: BASE_URLS[environment] };
 }
 
 /**
  * Creates an axios client for the Credly API, scoped to the organization in
- * CREDLY_ORG_ID. Paths are relative to `/v1/organizations/{org_id}`:
+ * CREDLY_ORG_ID, or in CREDLY_SANDBOX_ORG_ID when `sandbox` is set. Paths are relative to `/v1/organizations/{org_id}`:
  *
  *   client.get('/badges')          ✓
  *   client.get('/v1/…/badges')     ✗ resolves to /v1/organizations/{id}/v1/…
@@ -170,8 +206,8 @@ export function readConfig(env = process.env) {
  * The returned client also carries `orgId` and `environment`, so callers can
  * say where they are about to write.
  */
-export function createCredlyClient(env = process.env) {
-  const { token, orgId, environment, baseURL } = readConfig(env);
+export function createCredlyClient({ sandbox = false, env = process.env } = {}) {
+  const { token, orgId, environment, baseURL } = readConfig(env, { sandbox });
 
   const client = axios.create({
     baseURL: `${baseURL}/organizations/${orgId}`,

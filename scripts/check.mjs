@@ -13,11 +13,13 @@ import { baseParser, describeTarget, isMain } from './run.mjs';
 import { ok, fail, muted } from './ui.mjs';
 
 async function main() {
-  baseParser().usage('npm run check\n\nConfirm the Credly credentials in .env work.').parseSync();
+  const argv = baseParser()
+    .usage('npm run check [-- --sandbox]\n\nConfirm the Credly credentials in .env work.')
+    .parseSync();
 
   let client;
   try {
-    client = createCredlyClient();
+    client = createCredlyClient({ sandbox: argv.sandbox });
   } catch (err) {
     console.error(fail(err.message));
     process.exit(1);

@@ -97,7 +97,7 @@ async function main() {
 
   let client;
   try {
-    client = createCredlyClient();
+    client = createCredlyClient({ sandbox: argv.sandbox });
   } catch (err) {
     console.error(fail(err.message));
     process.exit(1);

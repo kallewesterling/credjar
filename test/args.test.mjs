@@ -34,6 +34,20 @@ test('every command takes --dry-run, and it defaults off', () => {
   }
 });
 
+test('every command takes --sandbox, and it defaults off', () => {
+  const commands = [
+    [baseParser, []],
+    [buildTemplateParser, []],
+    [buildBadgeParser, []],
+    [buildIssueParser, ISSUE_ONE],
+    [buildRevokeParser, REVOKE_ONE]
+  ];
+  for (const [build, required] of commands) {
+    assert.equal(parse(build, required).sandbox, false);
+    assert.equal(parse(build, [...required, '--sandbox']).sandbox, true);
+  }
+});
+
 // A mistyped --dry-run must not be ignored and turn a preview into a live run.
 test('an unknown flag is an error, so a typo cannot drop --dry-run', () => {
   assert.throws(() => parse(buildIssueParser, [...ISSUE_ONE, '--dryrun']), /Unknown argument/);

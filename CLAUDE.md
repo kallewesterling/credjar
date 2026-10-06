@@ -94,6 +94,18 @@ badges, so `readConfig()` refuses to guess. Every command prints the
 organization and environment first, and the write confirmation makes the
 operator type the environment's name.
 
+`--sandbox` is the other way in, and has the same property. It reads
+**only** `CREDLY_SANDBOX_API_TOKEN` and `CREDLY_SANDBOX_ORG_ID` (names in
+`SETTING_NAMES`), never their production counterparts, and fixes the host
+to the sandbox regardless of any setting. Don't add a fallback from one set
+to the other "for convenience": the separation is what lets one `.env` hold
+both. `test/credly-client.test.mjs` pins it.
+
+The sandbox is a separate organization that Credly set up on request
+(2026-10-05). It sends every badge email to
+the organization's technical contact rather than the recipient, so issuing
+there emails no one else.
+
 ## Writes: what every write command does
 
 Established by syncjar's destructive scripts, and followed here:

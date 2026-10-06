@@ -39,6 +39,7 @@ Fill in `.env`:
 | `CREDLY_API_TOKEN` | Credly → Organization Management → Developers → Authorization Tokens. Tokens expire after 180 days. |
 | `CREDLY_ORG_ID` | The UUID at the top of any tab in the Developers section. |
 | `CREDLY_ENV` | `sandbox` or `production`. Required. A token only works in its own environment. |
+| `CREDLY_SANDBOX_API_TOKEN`, `CREDLY_SANDBOX_ORG_ID` | Optional. The sandbox's token and organization ID, used by `--sandbox`. See below. |
 
 Then check the connection:
 
@@ -58,6 +59,29 @@ npm run check
 
 Pass options after `--`, for example `npm run badges -- --state accepted`.
 Every command takes `--help`.
+
+### `--sandbox`
+
+Every command takes `--sandbox`, which runs it against the Credly sandbox
+(sandbox.credly.com) using the `CREDLY_SANDBOX_*` settings instead:
+
+```bash
+npm run check -- --sandbox
+npm run issue -- --sandbox --template <id> --in people.csv --dry-run
+```
+
+- **It never falls back to the production settings.** If a sandbox setting
+  is missing, the command stops and says which one.
+- **It always talks to the sandbox host,** whatever the settings say. A
+  production token in the sandbox settings fails with a 401 and can't reach
+  production. If `CREDLY_SANDBOX_ENV` is set to anything other than
+  `sandbox`, the command refuses to run.
+- **The sandbox doesn't email recipients.** It sends every badge
+  notification to the organization's technical contact, which is set under
+  Account → Profile in the sandbox.
+
+Credly asks that you don't use real earners' data in the sandbox. Use test
+addresses you control.
 
 ### `--dry-run`
 
