@@ -38,6 +38,11 @@ export function baseParser(args = hideBin(process.argv)) {
       default: false,
       describe: 'Make the reads, show what would happen, and write nothing to Credly or to disk'
     })
+    .option('sandbox', {
+      type: 'boolean',
+      default: false,
+      describe: 'Use the Credly sandbox, with the CREDLY_SANDBOX_* settings from .env'
+    })
     .strictOptions()
     .wrap(Math.min(110, process.stdout.columns || 110))
     .help();

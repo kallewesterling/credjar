@@ -146,7 +146,7 @@ async function main() {
 
   let client;
   try {
-    client = createCredlyClient();
+    client = createCredlyClient({ sandbox: argv.sandbox });
   } catch (err) {
     console.error(fail(err.message));
     process.exit(1);
@@ -202,11 +202,14 @@ async function main() {
   for (const { payload: p } of toIssue) {
     console.log(`    ${p.recipient_email}  ${p.issued_to_first_name} ${p.issued_to_last_name}  ${muted(name(p.badge_template_id))}`);
   }
-  console.log(
-    argv.suppressEmail
-      ? muted('\n  Credly will be asked not to email recipients.')
-      : muted('\n  Each recipient will get an email from Credly. That cannot be unsent.')
-  );
+  // The sandbox redirects every email to the organization's technical
+  // contact, so the production warning would be wrong there, and a habit
+  // of seeing it be wrong is how it stops being read.
+  if (argv.suppressEmail) console.log(muted('\n  Credly will be asked not to email recipients.'));
+  else if (client.environment === 'sandbox') {
+    console.log(muted('\n  The sandbox sends Credly\'s emails to the organization\'s technical contact, not to'));
+    console.log(muted('  recipients.'));
+  } else console.log(muted('\n  Each recipient will get an email from Credly. That cannot be unsent.'));
 
   if (!toIssue.length) {
     console.log();

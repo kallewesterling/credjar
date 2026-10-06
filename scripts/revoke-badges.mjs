@@ -97,7 +97,7 @@ async function main() {
 
   let client;
   try {
-    client = createCredlyClient();
+    client = createCredlyClient({ sandbox: argv.sandbox });
   } catch (err) {
     console.error(fail(err.message));
     process.exit(1);
@@ -124,11 +124,11 @@ async function main() {
     console.log(`    ${id}  ${badge.state.padEnd(8)}  ${badge.recipient_email}  ${muted(badge.badge_template?.name ?? '')}`);
   }
   console.log(muted(`\n  Reason: ${argv.reason}`));
-  console.log(
-    argv.suppressEmail
-      ? muted('  Credly will be asked not to email earners.')
-      : muted('  Each earner will get an email from Credly, including the reason.')
-  );
+  if (argv.suppressEmail) console.log(muted('  Credly will be asked not to email earners.'));
+  else if (client.environment === 'sandbox') {
+    console.log(muted('  The sandbox sends Credly\'s emails to the organization\'s technical contact, not to'));
+    console.log(muted('  earners.'));
+  } else console.log(muted('  Each earner will get an email from Credly, including the reason.'));
   console.log(muted('  There is no un-revoke. Restoring a badge means issuing a new one.'));
 
   if (!toRevoke.length) {

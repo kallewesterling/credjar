@@ -30,6 +30,11 @@ and version scheme in `CLAUDE.md`.
   a POST after a server error.
 - Offline test suite and a CI workflow running it on Node 20 and 22.
 
+- `--sandbox` on every command runs it against the Credly sandbox, using
+  separate `CREDLY_SANDBOX_API_TOKEN` and `CREDLY_SANDBOX_ORG_ID` settings.
+  It never falls back to the production settings, and always uses the
+  sandbox host.
+
 ### Fixed
 
 - `issue`'s duplicate check compared only the exact email, but Credly also
