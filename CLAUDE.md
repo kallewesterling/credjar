@@ -116,6 +116,12 @@ The sandbox is a separate organization that Credly set up on request
 - **The exact-email search finds pending badges,** ones no account has
   accepted yet. So `issue`'s `email` search is needed alongside
   `recipient_email_all`, and must not be dropped as redundant.
+- **`recipient_email_all` works as documented, and the "same Credly user"
+  check is verified live.** A badge to `you+test1@…` was skipped when
+  issuing to `you@…`. What links a badge to an account is *confirming its
+  address*, not accepting the badge: right after confirmation it still read
+  `pending` but already had a `user`, and matched. Before confirmation it
+  had `"user": {}` and did not match.
 
 ## Writes: what every write command does
 
