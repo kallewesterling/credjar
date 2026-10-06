@@ -102,9 +102,20 @@ to the other "for convenience": the separation is what lets one `.env` hold
 both. `test/credly-client.test.mjs` pins it.
 
 The sandbox is a separate organization that Credly set up on request
-(2026-10-05). It sends every badge email to
-the organization's technical contact rather than the recipient, so issuing
-there emails no one else.
+(2026-10-05). Observed there on 2026-10-06:
+
+- **Every email goes to the technical contact,** including badge
+  notifications and email-address confirmations, so issuing there emails
+  no one else. `issue` and `revoke` say so instead of the production
+  warning.
+- **Accepting a badge needs its address confirmed on the accepting
+  account.** Confirming adds the address to that account as a second email,
+  which is exactly the setup the "same Credly user" duplicate rule needs:
+  issue to `you+test1@…`, accept it as `you@…`, and `you@…` then holds it
+  under another address.
+- **The exact-email search finds pending badges,** ones no account has
+  accepted yet. So `issue`'s `email` search is needed alongside
+  `recipient_email_all`, and must not be dropped as redundant.
 
 ## Writes: what every write command does
 
