@@ -6,8 +6,8 @@ learned in one should be carried to the other.
 
 - `docs/credly-api.md`: every endpoint, the permission it needs, and what the
   reference says beyond the endpoint names. Read it before adding a call.
-- `docs/plans/`: proposed work. `roadmap.md` lists it in order, and item 1
-  is a known gap in `issue`.
+- `docs/plans/`: proposed work. `roadmap.md` lists it in order, with what
+  has been done marked as such.
 
 ## Branches and versions
 
@@ -176,7 +176,8 @@ Established by syncjar's destructive scripts, and followed here:
 
 ## Importing a script must not run it
 
-Entry points (`check`, `list-*`, `issue-badges`, `revoke-badges`) guard
+Entry points (`check`, `list-*`, `issue-badges`, `revoke-badges`,
+`create-template`) guard
 `main()` with `isMain(import.meta.url)`, and the client is built inside
 `main()`, never at module scope. `test/import-without-credentials.test.mjs`
 imports every module in a child process with credentials stripped and cwd

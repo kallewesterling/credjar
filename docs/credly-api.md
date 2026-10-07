@@ -161,7 +161,7 @@ reference lists; "Scope" is the OAuth scope.
 |---|---|---|---|
 | `GET /badge_templates` | read | badge_templates | `templates` |
 | `GET /badge_templates/{id}` | read | badge_templates | `issue` preflight |
-| `POST /badge_templates` | write | badge_templates | no |
+| `POST /badge_templates` | write | badge_templates | `templates:create` |
 | `PUT /badge_templates/{id}` | write | badge_templates | no |
 | `DELETE /badge_templates/{id}` | delete | badge_templates | no |
 | `GET/POST /badge_templates/{id}/endorsements`, `GET/PUT/DELETE …/{id}` | read, write, delete | badge_templates | no |

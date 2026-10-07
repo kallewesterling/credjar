@@ -1,7 +1,7 @@
 # Roadmap
 
-Status: ideas, 2026-09-30. Nothing here is scheduled except the first item,
-which fixes a gap in code that has already shipped. Every item comes from a
+Status: ideas, 2026-09-30, updated 2026-10-07. Items that are done say so
+under their heading. Every item comes from a
 full read of the API reference; the facts behind each one are in
 [`../credly-api.md`](../credly-api.md). A larger item gets its own plan, as
 [`replace-and-delete.md`](replace-and-delete.md) does.
@@ -9,6 +9,10 @@ full read of the API reference; the facts behind each one are in
 Roughly in order of value for the risk.
 
 ## 1. Fix: the duplicate check only matches on email
+
+**Done** in #2, 2026-10-06. Tested against the sandbox for the same-email
+and same-user rules (see `CLAUDE.md`). The `issuer_earner_id` rule is
+covered by unit tests only. Kept below as the record of why.
 
 **This is a gap in `issue` as shipped.**
 
@@ -44,6 +48,9 @@ The fix:
 - Tests in `issue-plan.test.mjs` for each of the three kinds.
 
 ## 2. Least-privilege token guidance
+
+**Partly done:** `.env-example` says it, for both the production and the
+sandbox token. The README doesn't yet.
 
 Tokens have separate read, write and delete flags. Everything credjar does
 today needs read and write, and none of it needs delete. So:
@@ -109,6 +116,11 @@ pagination in the sandbox.
 See [`replace-and-delete.md`](replace-and-delete.md).
 
 ## 8. Badge templates as local files
+
+**Creating is done:** `npm run templates:create`, in #4, 2026-10-06. It was
+done before editing, against the order below, because the sandbox started
+with no templates and nothing could be issued without one. Pulling and
+editing are still to do.
 
 Following syncjar's approach for courses: pull templates to JSON, edit
 them, then push with a diff, confirmation and read-back.

@@ -1,6 +1,7 @@
 # Plan: replace and delete issued badges
 
-Status: proposal, 2026-09-30. Not started.
+Status: proposal, 2026-09-30. Not started. The sandbox the experiments
+need exists as of 2026-10-05: run any command with `--sandbox`.
 
 credjar can issue and revoke. The API also has two more ways to change an
 issued badge, and credjar leaves both out on purpose for now:
