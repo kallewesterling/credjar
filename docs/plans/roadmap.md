@@ -10,9 +10,9 @@ Roughly in order of value for the risk.
 
 ## 1. Fix: the duplicate check only matches on email
 
-**Done** in #2, 2026-10-06. Tested against the sandbox for the same-email
-and same-user rules (see `CLAUDE.md`). The `issuer_earner_id` rule is
-covered by unit tests only. Kept below as the record of why.
+**Done** in #2, 2026-10-06. All three rules tested against the sandbox:
+same email and same user on 2026-10-06, `issuer_earner_id` on 2026-10-07
+(see `CLAUDE.md`). Kept below as the record of why.
 
 **This is a gap in `issue` as shipped.**
 
