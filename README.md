@@ -41,6 +41,20 @@ Fill in `.env`:
 | `CREDLY_ENV` | `sandbox` or `production`. Required. A token only works in its own environment. |
 | `CREDLY_SANDBOX_API_TOKEN`, `CREDLY_SANDBOX_ORG_ID` | Optional. The sandbox's token and organization ID, used by `--sandbox`. See below. |
 
+### Create the token with read and write only
+
+When you add the token in Credly, tick **read** and **write** and leave
+**delete** unticked. Do the same for the sandbox token.
+
+Nothing credjar does needs delete. Issuing and revoking need write, and
+both leave a visible record: an issued badge or a revoked one, with its
+reason. Delete removes a badge's record entirely. Without delete permission,
+no bug in credjar or in a script you write with it can remove a badge.
+
+Credly's OAuth scopes don't help here: the `issued_badges` scope covers
+deleting as well as issuing, so a token without delete is the narrowest
+credential available.
+
 Then check the connection:
 
 ```bash

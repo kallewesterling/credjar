@@ -145,6 +145,14 @@ The sandbox is a separate organization that Credly set up on request
   `pending` but already had a `user`, and matched. Before confirmation it
   had `"user": {}` and did not match.
 
+Observed on 2026-10-07, testing the CSV paths:
+
+- **The `issuer_earner_id` rule works:** a new address carrying an
+  `issuer_earner_id` already used on a pending badge was skipped. With that,
+  all three duplicate rules have been tested against the real API.
+- **`badges --csv` feeds `revoke --in` directly,** and already-revoked
+  badges in the export are skipped.
+
 ## Writes: what every write command does
 
 Established by syncjar's destructive scripts, and followed here:
