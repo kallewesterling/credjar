@@ -5,6 +5,7 @@ import { buildTemplateParser } from '../scripts/list-templates.mjs';
 import { buildBadgeParser } from '../scripts/list-badges.mjs';
 import { buildIssueParser } from '../scripts/issue-badges.mjs';
 import { buildRevokeParser } from '../scripts/revoke-badges.mjs';
+import { buildCreateTemplateParser } from '../scripts/create-template.mjs';
 import { baseParser, isRunFatal } from '../scripts/run.mjs';
 
 /** Parses without yargs printing or exiting, and throws on a usage error. */
@@ -19,6 +20,7 @@ function parse(build, args) {
 
 const ISSUE_ONE = ['--template', 't', '--email', 'a@b.co', '--first-name', 'A', '--last-name', 'B'];
 const REVOKE_ONE = ['--badge', 'b1', '--reason', 'issued in error'];
+const CREATE_ONE = ['--file', 't.json'];
 
 test('every command takes --dry-run, and it defaults off', () => {
   const commands = [
@@ -26,11 +28,27 @@ test('every command takes --dry-run, and it defaults off', () => {
     [buildTemplateParser, []],
     [buildBadgeParser, []],
     [buildIssueParser, ISSUE_ONE],
-    [buildRevokeParser, REVOKE_ONE]
+    [buildRevokeParser, REVOKE_ONE],
+    [buildCreateTemplateParser, CREATE_ONE]
   ];
   for (const [build, required] of commands) {
     assert.equal(parse(build, required).dryRun, false);
     assert.equal(parse(build, [...required, '--dry-run']).dryRun, true);
+  }
+});
+
+test('every command takes --sandbox, and it defaults off', () => {
+  const commands = [
+    [baseParser, []],
+    [buildTemplateParser, []],
+    [buildBadgeParser, []],
+    [buildIssueParser, ISSUE_ONE],
+    [buildRevokeParser, REVOKE_ONE],
+    [buildCreateTemplateParser, CREATE_ONE]
+  ];
+  for (const [build, required] of commands) {
+    assert.equal(parse(build, required).sandbox, false);
+    assert.equal(parse(build, [...required, '--sandbox']).sandbox, true);
   }
 });
 

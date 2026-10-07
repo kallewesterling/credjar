@@ -116,6 +116,35 @@ badges, so `readConfig()` refuses to guess. Every command prints the
 organization and environment first, and the write confirmation makes the
 operator type the environment's name.
 
+`--sandbox` is the other way in, and has the same property. It reads
+**only** `CREDLY_SANDBOX_API_TOKEN` and `CREDLY_SANDBOX_ORG_ID` (names in
+`SETTING_NAMES`), never their production counterparts, and fixes the host
+to the sandbox regardless of any setting. Don't add a fallback from one set
+to the other "for convenience": the separation is what lets one `.env` hold
+both. `test/credly-client.test.mjs` pins it.
+
+The sandbox is a separate organization that Credly set up on request
+(2026-10-05). Observed there on 2026-10-06:
+
+- **Every email goes to the technical contact,** including badge
+  notifications and email-address confirmations, so issuing there emails
+  no one else. `issue` and `revoke` say so instead of the production
+  warning.
+- **Accepting a badge needs its address confirmed on the accepting
+  account.** Confirming adds the address to that account as a second email,
+  which is exactly the setup the "same Credly user" duplicate rule needs:
+  issue to `you+test1@…`, accept it as `you@…`, and `you@…` then holds it
+  under another address.
+- **The exact-email search finds pending badges,** ones no account has
+  accepted yet. So `issue`'s `email` search is needed alongside
+  `recipient_email_all`, and must not be dropped as redundant.
+- **`recipient_email_all` works as documented, and the "same Credly user"
+  check is verified live.** A badge to `you+test1@…` was skipped when
+  issuing to `you@…`. What links a badge to an account is *confirming its
+  address*, not accepting the badge: right after confirmation it still read
+  `pending` but already had a `user`, and matched. Before confirmation it
+  had `"user": {}` and did not match.
+
 ## Writes: what every write command does
 
 Established by syncjar's destructive scripts, and followed here:

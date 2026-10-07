@@ -91,11 +91,17 @@ export function planIssues(rows, { templateId, issuedAt, suppressEmail = false }
     if (!payload.issued_at) reasons.push('missing issued_at');
 
     if (!reasons.length) {
-      const key = duplicateKey(payload.recipient_email, payload.badge_template_id);
-      if (seen.has(key)) {
-        reasons.push(`same person and badge as the row on line ${seen.get(key) ?? '?'}`);
+      // Credly counts the same issuer_earner_id as the same person, so the
+      // file is held to that too.
+      const keys = [duplicateKey(payload.recipient_email, payload.badge_template_id)];
+      if (payload.issuer_earner_id) {
+        keys.push(`earner\u0000${payload.issuer_earner_id}\u0000${payload.badge_template_id}`);
+      }
+      const earlier = keys.find((k) => seen.has(k));
+      if (earlier) {
+        reasons.push(`same person and badge as the row on line ${seen.get(earlier) ?? '?'}`);
       } else {
-        seen.set(key, line);
+        for (const k of keys) seen.set(k, line);
       }
     }
 
@@ -107,23 +113,118 @@ export function planIssues(rows, { templateId, issuedAt, suppressEmail = false }
 }
 
 /**
+ * The badge searches that, between them, find every badge Credly would call
+ * a duplicate of this one.
+ *
+ * Credly counts a badge as a duplicate of an existing one from the same
+ * template if it has the same `recipient_email`, or the same
+ * `issuer_earner_id`, or goes to the same Credly user under another of their
+ * email addresses. Each of those needs its own search:
+ *
+ *   email             `recipient_email` — exact address, including pending
+ *                     badges to people with no Credly account yet
+ *   same_user         `recipient_email_all` — every address on the user's
+ *                     profile, primary and secondary
+ *   issuer_earner_id  only when the row has one
+ *
+ * `email` and `same_user` overlap, and both are made anyway. The reference
+ * does not say whether `recipient_email_all` finds a pending badge whose
+ * recipient has no account, and asking twice costs one request per row.
+ */
+export function duplicateSearches(payload) {
+  const template = payload.badge_template_id;
+  const searches = [
+    { kind: 'email', filter: { badge_template_id: template, recipient_email: payload.recipient_email } },
+    { kind: 'same_user', filter: { badge_template_id: template, recipient_email_all: payload.recipient_email } }
+  ];
+  if (payload.issuer_earner_id) {
+    searches.push({
+      kind: 'issuer_earner_id',
+      filter: { badge_template_id: template, issuer_earner_id: payload.issuer_earner_id }
+    });
+  }
+  return searches;
+}
+
+// Most specific first, so a badge found by more than one search is reported
+// the way the operator will most easily recognise it.
+const MATCH_ORDER = ['email', 'issuer_earner_id', 'same_user'];
+
+/**
+ * Decides, from the results of duplicateSearches(), whether this person
+ * already holds this badge.
+ *
+ * `results` is `[{ kind, badges }]`. Returns `{ held, problem }`: `held` is
+ * `{ badge, match }` or null, and `problem` is a string when the results
+ * cannot be trusted, in which case the run must stop rather than guess.
+ *
+ * Server-side filters are not taken on faith. A result from the wrong
+ * template, or an `email` or `issuer_earner_id` result that does not match,
+ * is dropped. `same_user` cannot be checked the same way, since a user's
+ * other addresses are not visible to us, so it gets a different check: one
+ * address belongs to at most one user. Results spanning several users mean
+ * the filter did not do what it is documented to do.
+ */
+export function findHeld(payload, results) {
+  const template = payload.badge_template_id;
+  const email = String(payload.recipient_email).trim().toLowerCase();
+  const matches = [];
+
+  for (const { kind, badges } of results) {
+    const relevant = badges.filter((b) => b.badge_template?.id === template);
+
+    if (kind === 'same_user') {
+      const users = new Set(relevant.map((b) => b.user?.id).filter(Boolean));
+      if (users.size > 1) {
+        return {
+          held: null,
+          problem:
+            `searching Credly for other badges held by ${payload.recipient_email} returned ` +
+            `badges for ${users.size} different users, so the duplicate check cannot be trusted`
+        };
+      }
+    }
+
+    for (const badge of relevant) {
+      if (!HOLDING_STATES.has(badge.state)) continue;
+      const sameEmail = String(badge.recipient_email ?? '').trim().toLowerCase() === email;
+      if (kind === 'email' && !sameEmail) continue;
+      if (kind === 'issuer_earner_id' && badge.issuer_earner_id !== payload.issuer_earner_id) continue;
+      matches.push({ badge, match: sameEmail ? 'email' : kind });
+    }
+  }
+
+  matches.sort((a, b) => MATCH_ORDER.indexOf(a.match) - MATCH_ORDER.indexOf(b.match));
+  return { held: matches[0] ?? null, problem: null };
+}
+
+/**
  * Splits planned issues into those to send and those that would duplicate a
  * badge the person already holds.
  *
- * `existing` maps duplicateKey() to the badges already issued for that
- * person and template, as returned by the API. A person holds the badge if
- * any of them is in a HOLDING_STATES state.
+ * `held` maps duplicateKey() to findHeld()'s `held` for that row.
  */
-export function splitDuplicates(planned, existing) {
+export function splitDuplicates(planned, held) {
   const toIssue = [];
   const duplicates = [];
   for (const entry of planned) {
-    const key = duplicateKey(entry.payload.recipient_email, entry.payload.badge_template_id);
-    const held = (existing.get(key) || []).find((b) => HOLDING_STATES.has(b.state));
-    if (held) duplicates.push({ ...entry, existing: held });
+    const h = held.get(duplicateKey(entry.payload.recipient_email, entry.payload.badge_template_id));
+    if (h) duplicates.push({ ...entry, existing: h.badge, match: h.match });
     else toIssue.push(entry);
   }
   return { toIssue, duplicates };
+}
+
+/** Why a duplicate counts as one, in words, for the plan and the audit file. */
+export function describeDuplicate({ existing, match }) {
+  const held = `${existing.state}, ${existing.id}`;
+  if (match === 'issuer_earner_id') {
+    return `same issuer_earner_id as the badge issued to ${existing.recipient_email} (${held})`;
+  }
+  if (match === 'same_user') {
+    return `same Credly user as the badge issued to ${existing.recipient_email} (${held})`;
+  }
+  return `already holds it (${held})`;
 }
 
 /**
