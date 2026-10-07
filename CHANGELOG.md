@@ -38,6 +38,17 @@ and version scheme in `CLAUDE.md`.
 - `npm run templates:create` creates a badge template from a JSON file and
   a PNG. It checks Credly's requirements locally, refuses unknown fields and
   duplicate names, and reads the template back to verify it.
+- `badges` checks that it read as many badges as Credly reports in total,
+  and warns if not, since a short count means the list is incomplete. It
+  also shows how many pages it read.
+- The README explains why the token should have read and write permission
+  only, never delete.
+
+### Changed
+
+- `package.json` is marked `private`, so `npm publish` refuses to run.
+- `.gitignore` covers any `.env.*` file, so an extra env file such as
+  `.env.sandbox` can't be committed with its token.
 
 ### Fixed
 

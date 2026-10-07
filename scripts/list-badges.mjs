@@ -10,9 +10,9 @@
  */
 import chalk from 'chalk';
 import { createCredlyClient } from './credly-client.mjs';
-import { fetchOrganization, fetchIssuedBadges } from './credly-fetch.mjs';
+import { fetchOrganization, fetchIssuedBadges, pagingProblem } from './credly-fetch.mjs';
 import { baseParser, describeTarget, isMain, writeDataCsv } from './run.mjs';
-import { ok, fail, skip, muted } from './ui.mjs';
+import { ok, warn, fail, skip, muted } from './ui.mjs';
 
 export const BADGE_COLUMNS = [
   'badge_id',
@@ -100,12 +100,18 @@ async function main() {
   } else {
     const org = await fetchOrganization(client);
     console.error(muted(describeTarget(org, client)));
-    console.log(chalk.bold(`\n${rows.length} issued badge${rows.length === 1 ? '' : 's'}\n`));
+    const pages = badges.pages > 1 ? muted(` (${badges.pages} pages)`) : '';
+    console.log(chalk.bold(`\n${rows.length} issued badge${rows.length === 1 ? '' : 's'}`) + pages + '\n');
     for (const r of rows) {
       const date = (r.issued_at ?? '').slice(0, 10);
       console.log(`  ${r.badge_id}  ${String(r.state).padEnd(9)} ${date}  ${r.recipient_email}  ${muted(r.template_name ?? '')}`);
     }
   }
+
+  // Only a full walk can be compared with Credly's total; --limit stops early
+  // on purpose.
+  const problem = argv.limit ? null : pagingProblem(badges);
+  if (problem) console.error(warn(`${problem}. This list may be incomplete.`));
 
   if (argv.csv) {
     if (argv.dryRun) {

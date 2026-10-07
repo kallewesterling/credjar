@@ -1,5 +1,8 @@
 # app setup
 .env
+# Any other env file, e.g. .env.sandbox, holds tokens too. .env-example
+# is unaffected: it has a hyphen, not a dot.
+.env.*
 node_modules
 
 # Exports and per-run audit CSVs. These contain real names and email
