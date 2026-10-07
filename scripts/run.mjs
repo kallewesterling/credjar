@@ -119,6 +119,11 @@ export function isRunFatal(err) {
  * one in INIT_CWD, so `npm run issue -- --in ../people.csv` means what it
  * looks like it means.
  */
-export function readInput(file) {
-  return fs.readFile(path.resolve(process.env.INIT_CWD ?? process.cwd(), file), 'utf8');
+export function readInput(file, encoding = 'utf8') {
+  return fs.readFile(inputPath(file), encoding);
+}
+
+/** Where `file` is, resolved the way readInput() resolves it. */
+export function inputPath(file) {
+  return path.resolve(process.env.INIT_CWD ?? process.cwd(), file);
 }

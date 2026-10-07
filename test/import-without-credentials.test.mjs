@@ -44,6 +44,7 @@ const MODULES = [
   './scripts/csv.mjs',
   './scripts/issue-plan.mjs',
   './scripts/revoke-plan.mjs',
+  './scripts/template-plan.mjs',
   './scripts/run.mjs',
   './scripts/ui.mjs',
   './scripts/concurrency.mjs',
@@ -53,7 +54,8 @@ const MODULES = [
   './scripts/list-templates.mjs',
   './scripts/list-badges.mjs',
   './scripts/issue-badges.mjs',
-  './scripts/revoke-badges.mjs'
+  './scripts/revoke-badges.mjs',
+  './scripts/create-template.mjs'
 ];
 
 test('every module loads without Credly credentials, and importing runs nothing', () => {

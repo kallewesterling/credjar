@@ -7,6 +7,7 @@
     "test": "node --test test/*.test.mjs",
     "check": "node scripts/check.mjs",
     "templates": "node scripts/list-templates.mjs",
+    "templates:create": "node scripts/create-template.mjs",
     "badges": "node scripts/list-badges.mjs",
     "issue": "node scripts/issue-badges.mjs",
     "revoke": "node scripts/revoke-badges.mjs"
