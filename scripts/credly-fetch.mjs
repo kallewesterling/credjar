@@ -37,10 +37,21 @@ export function filterParams(filter = {}) {
 /**
  * Walks a paginated list endpoint and returns every result across all pages.
  * `limit` stops early once that many results are in hand.
+ *
+ * The returned array also carries two non-enumerable properties, for callers
+ * that want to show the walk was complete: `pages`, how many were read, and
+ * `reportedTotal`, the `total_count` Credly gave on the first page (or
+ * undefined if it gave none). See pagingProblem().
  */
 export async function fetchAllPages(client, endpoint, { filter, sort, limit, describe } = {}) {
   const all = [];
   let page = 1;
+  let reportedTotal;
+  const finish = (result) => {
+    Object.defineProperty(result, 'pages', { value: page, enumerable: false });
+    Object.defineProperty(result, 'reportedTotal', { value: reportedTotal, enumerable: false });
+    return result;
+  };
 
   while (true) {
     let body;
@@ -52,16 +63,32 @@ export async function fetchAllPages(client, endpoint, { filter, sort, limit, des
       failCleanly(err, `${describe ?? `Could not read ${endpoint}`} (page ${page}).`);
     }
 
-    all.push(...(body.data || []));
-    if (limit && all.length >= limit) return all.slice(0, limit);
-
     const meta = body.metadata || {};
+    if (page === 1 && Number.isFinite(meta.total_count)) reportedTotal = meta.total_count;
+
+    const results = body.data || [];
+    all.push(...results);
+    if (limit && all.length >= limit) return finish(all.slice(0, limit));
+
     const more = meta.next_page_url || (meta.total_pages && page < meta.total_pages);
-    if (!more) break;
+    // An empty page that claims there is more would otherwise loop forever.
+    if (!more || !results.length) break;
     page += 1;
   }
 
-  return all;
+  return finish(all);
+}
+
+/**
+ * A description of what's wrong if a complete walk didn't get as many
+ * results as Credly said there were, or null if it did, or if Credly gave no
+ * total to compare with. A difference means paging went wrong, or the list
+ * changed during the walk, and either way the result is not the full list.
+ */
+export function pagingProblem(results) {
+  const total = results.reportedTotal;
+  if (!Number.isFinite(total) || total === results.length) return null;
+  return `Credly reported ${total} in total, but ${results.length} were read across ${results.pages} pages`;
 }
 
 /**

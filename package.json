@@ -1,12 +1,14 @@
 {
   "name": "credjar",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "private": true,
   "description": "Inspect, issue, and revoke Credly badges from the command line.",
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "check": "node scripts/check.mjs",
     "templates": "node scripts/list-templates.mjs",
+    "templates:create": "node scripts/create-template.mjs",
     "badges": "node scripts/list-badges.mjs",
     "issue": "node scripts/issue-badges.mjs",
     "revoke": "node scripts/revoke-badges.mjs"

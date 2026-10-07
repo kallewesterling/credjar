@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { redactError, shouldRetry, readConfig, describeError, BASE_URLS } from '../scripts/credly-client.mjs';
+import { redactError, shouldRetry, readConfig, describeError, BASE_URLS, createCredlyClient } from '../scripts/credly-client.mjs';
 
 const TOKEN = 'notARealCredlyToken123';
 
@@ -135,6 +135,68 @@ test('readConfig picks the base URL for the environment', () => {
   assert.equal(readConfig({ ...base, CREDLY_ENV: 'sandbox' }).baseURL, BASE_URLS.sandbox);
   assert.equal(readConfig({ ...base, CREDLY_ENV: 'production' }).baseURL, BASE_URLS.production);
   assert.match(BASE_URLS.sandbox, /sandbox-api\.credly\.com/);
+});
+
+// Both sets present, as in a .env that holds production and sandbox side
+// by side.
+const BOTH = {
+  CREDLY_API_TOKEN: 'prod-token',
+  CREDLY_ORG_ID: 'prod-org',
+  CREDLY_ENV: 'production',
+  CREDLY_SANDBOX_API_TOKEN: 'sandbox-token',
+  CREDLY_SANDBOX_ORG_ID: 'sandbox-org',
+  CREDLY_SANDBOX_ENV: 'sandbox'
+};
+
+test('--sandbox reads only the sandbox settings, and the sandbox host', () => {
+  const config = readConfig(BOTH, { sandbox: true });
+  assert.deepEqual(config, {
+    token: 'sandbox-token',
+    orgId: 'sandbox-org',
+    environment: 'sandbox',
+    baseURL: BASE_URLS.sandbox
+  });
+});
+
+test('without --sandbox, the sandbox settings are ignored', () => {
+  const config = readConfig(BOTH);
+  assert.equal(config.token, 'prod-token');
+  assert.equal(config.orgId, 'prod-org');
+  assert.equal(config.baseURL, BASE_URLS.production);
+});
+
+// The point of separate settings: a sandbox run with a gap in its settings
+// must stop, not quietly pick up the production token and org.
+test('--sandbox never falls back to the production settings', () => {
+  const { CREDLY_SANDBOX_API_TOKEN, ...noSandboxToken } = BOTH;
+  assert.throws(() => readConfig(noSandboxToken, { sandbox: true }), /CREDLY_SANDBOX_API_TOKEN is not set.*never falls back/);
+  const { CREDLY_SANDBOX_ORG_ID, ...noSandboxOrg } = BOTH;
+  assert.throws(() => readConfig(noSandboxOrg, { sandbox: true }), /CREDLY_SANDBOX_ORG_ID is not set/);
+});
+
+test('--sandbox does not need CREDLY_SANDBOX_ENV, or any production setting', () => {
+  const config = readConfig({ CREDLY_SANDBOX_API_TOKEN: 't', CREDLY_SANDBOX_ORG_ID: 'o' }, { sandbox: true });
+  assert.equal(config.environment, 'sandbox');
+  assert.equal(config.baseURL, BASE_URLS.sandbox);
+});
+
+// The host comes from the flag, not from a setting, so no value in .env can
+// point a --sandbox run at production.
+test('--sandbox refuses a CREDLY_SANDBOX_ENV that says otherwise', () => {
+  assert.throws(
+    () => readConfig({ ...BOTH, CREDLY_SANDBOX_ENV: 'production' }, { sandbox: true }),
+    /CREDLY_SANDBOX_ENV is "production", but --sandbox only talks to the sandbox/
+  );
+});
+
+test('the client built with --sandbox targets the sandbox organization', () => {
+  const client = createCredlyClient({ sandbox: true, env: BOTH });
+  assert.equal(client.defaults.baseURL, `${BASE_URLS.sandbox}/organizations/sandbox-org`);
+  assert.equal(client.environment, 'sandbox');
+  assert.equal(client.defaults.auth.username, 'sandbox-token');
+
+  const prod = createCredlyClient({ env: BOTH });
+  assert.equal(prod.defaults.baseURL, `${BASE_URLS.production}/organizations/prod-org`);
 });
 
 test('describeError reads both of Credly\'s error shapes', () => {

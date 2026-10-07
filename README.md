@@ -39,6 +39,21 @@ Fill in `.env`:
 | `CREDLY_API_TOKEN` | Credly → Organization Management → Developers → Authorization Tokens. Tokens expire after 180 days. |
 | `CREDLY_ORG_ID` | The UUID at the top of any tab in the Developers section. |
 | `CREDLY_ENV` | `sandbox` or `production`. Required. A token only works in its own environment. |
+| `CREDLY_SANDBOX_API_TOKEN`, `CREDLY_SANDBOX_ORG_ID` | Optional. The sandbox's token and organization ID, used by `--sandbox`. See below. |
+
+### Create the token with read and write only
+
+When you add the token in Credly, tick **read** and **write** and leave
+**delete** unticked. Do the same for the sandbox token.
+
+Nothing credjar does needs delete. Issuing and revoking need write, and
+both leave a visible record: an issued badge or a revoked one, with its
+reason. Delete removes a badge's record entirely. Without delete permission,
+no bug in credjar or in a script you write with it can remove a badge.
+
+Credly's OAuth scopes don't help here: the `issued_badges` scope covers
+deleting as well as issuing, so a token without delete is the narrowest
+credential available.
 
 Then check the connection:
 
@@ -53,11 +68,46 @@ npm run check
 | `npm run check` | Confirms the credentials work and shows which organization and environment they point at | No |
 | `npm run templates` | Lists badge templates and their ids | No |
 | `npm run badges` | Lists issued badges, optionally as CSV | No |
+| `npm run templates:create` | Creates a badge template from a JSON file and a PNG | **Yes** |
 | `npm run issue` | Issues badges | **Yes** |
 | `npm run revoke` | Revokes badges | **Yes** |
 
 Pass options after `--`, for example `npm run badges -- --state accepted`.
-Every command takes `--help`.
+Every command takes `--help`. In the examples, `TEMPLATE_ID` and `BADGE_ID`
+stand for the ids that `npm run templates` and `npm run badges` print.
+
+npm prints each command before running it, and it masks anything shaped
+like a UUID as `***` in that line, because old npm access tokens were UUIDs.
+So `--template ***` in npm's echo is expected. credjar receives the real id.
+
+### `--sandbox`
+
+Every command takes `--sandbox`, which runs it against the Credly sandbox
+(sandbox.credly.com) using the `CREDLY_SANDBOX_*` settings instead:
+
+```bash
+npm run check -- --sandbox
+npm run issue -- --sandbox --template TEMPLATE_ID --in people.csv --dry-run
+```
+
+- **It never falls back to the production settings.** If a sandbox setting
+  is missing, the command stops and says which one.
+- **It always talks to the sandbox host,** whatever the settings say. A
+  production token in the sandbox settings fails with a 401 and can't reach
+  production. If `CREDLY_SANDBOX_ENV` is set to anything other than
+  `sandbox`, the command refuses to run.
+- **The sandbox doesn't email recipients.** It sends every email,
+  including badge notifications and address confirmations, to the
+  organization's technical contact, which is set under Account → Profile
+  in the sandbox.
+- **To accept a sandbox badge, its address has to be confirmed on your
+  account.** Accepting a badge issued to `you+test1@…` while signed in as
+  `you@…` asks you to confirm `you+test1@…`. The confirmation goes to the
+  technical contact, and confirming adds the address to your account as a
+  second email.
+
+Credly asks that you don't use real earners' data in the sandbox. Use test
+addresses you control.
 
 ### `--dry-run`
 
@@ -80,10 +130,32 @@ npm run templates -- --state active
 npm run templates -- --name "Intro" --csv
 ```
 
+### Create a badge template
+
+```bash
+npm run templates:create -- --sandbox \
+  --file examples/badge-template.json --image badge.png --dry-run
+```
+
+The JSON file describes the template. `examples/badge-template.json` shows
+every field credjar accepts. Credly requires a `name`, a `description` of
+500 characters or fewer, at least three `skills`, at least one earning
+criterion in `badge_template_activities`, and a PNG image of at least
+600×600. You can pass the image as `--image`, or as `image_url` in the file.
+
+All of this is checked before anything is sent, and an unknown field is an
+error, so a misspelt field name can't be silently dropped. The command
+refuses if a template with the same name already exists, asks for typed
+confirmation, reads the new template back to check it, and writes an audit
+CSV.
+
+Set `"state": "active"` to issue from the template straight away, or
+`"draft"` to finish it in the Credly UI first.
+
 ### List issued badges
 
 ```bash
-npm run badges -- --template <template_id>
+npm run badges -- --template TEMPLATE_ID
 npm run badges -- --email ada@example.com
 npm run badges -- --state pending,accepted --since 2026-01-01 --csv
 ```
@@ -96,14 +168,14 @@ npm run badges -- --state pending,accepted --since 2026-01-01 --csv
 To one person:
 
 ```bash
-npm run issue -- --template <template_id> \
+npm run issue -- --template TEMPLATE_ID \
   --email ada@example.com --first-name Ada --last-name Lovelace --dry-run
 ```
 
 To a CSV of people:
 
 ```bash
-npm run issue -- --template <template_id> --in people.csv --dry-run
+npm run issue -- --template TEMPLATE_ID --in people.csv --dry-run
 ```
 
 The CSV needs `email`, `first_name` and `last_name` columns. It can also
@@ -123,8 +195,11 @@ Before anything is sent:
    Fix the file and run it again.
 2. **Every template must exist and be active.**
 3. **People who already hold the badge are skipped.** That means a pending
-   or accepted badge from the same template. People whose badge was revoked
-   or rejected get a new one. `--allow-duplicate` overrides this.
+   or accepted badge from the same template, matched the way Credly matches
+   duplicates: the same email, any other email on the person's Credly
+   profile, or the same `issuer_earner_id`. The plan says which rule
+   matched. People whose badge was revoked or rejected get a new one.
+   `--allow-duplicate` overrides this.
 4. **The plan is shown.** With `--dry-run`, the command stops here.
 5. **You type `sandbox` or `production` to continue.** `--yes` skips this
    step, for scripts.
@@ -139,7 +214,7 @@ Before anything is sent:
 ### Revoke badges
 
 ```bash
-npm run revoke -- --badge <badge_id> --reason "Issued in error" --dry-run
+npm run revoke -- --badge BADGE_ID --reason "Issued in error" --dry-run
 npm run revoke -- --in badges.csv --reason "Issued in error" --dry-run
 ```
 

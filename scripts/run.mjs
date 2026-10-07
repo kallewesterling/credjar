@@ -38,6 +38,11 @@ export function baseParser(args = hideBin(process.argv)) {
       default: false,
       describe: 'Make the reads, show what would happen, and write nothing to Credly or to disk'
     })
+    .option('sandbox', {
+      type: 'boolean',
+      default: false,
+      describe: 'Use the Credly sandbox, with the CREDLY_SANDBOX_* settings from .env'
+    })
     .strictOptions()
     .wrap(Math.min(110, process.stdout.columns || 110))
     .help();
@@ -114,6 +119,11 @@ export function isRunFatal(err) {
  * one in INIT_CWD, so `npm run issue -- --in ../people.csv` means what it
  * looks like it means.
  */
-export function readInput(file) {
-  return fs.readFile(path.resolve(process.env.INIT_CWD ?? process.cwd(), file), 'utf8');
+export function readInput(file, encoding = 'utf8') {
+  return fs.readFile(inputPath(file), encoding);
+}
+
+/** Where `file` is, resolved the way readInput() resolves it. */
+export function inputPath(file) {
+  return path.resolve(process.env.INIT_CWD ?? process.cwd(), file);
 }

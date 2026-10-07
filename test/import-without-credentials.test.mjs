@@ -21,6 +21,9 @@ function importWithoutCredentials(relativeModule) {
   delete env.CREDLY_API_TOKEN;
   delete env.CREDLY_ORG_ID;
   delete env.CREDLY_ENV;
+  delete env.CREDLY_SANDBOX_API_TOKEN;
+  delete env.CREDLY_SANDBOX_ORG_ID;
+  delete env.CREDLY_SANDBOX_ENV;
 
   const url = pathToFileURL(path.join(root, relativeModule)).href;
   try {
@@ -41,6 +44,7 @@ const MODULES = [
   './scripts/csv.mjs',
   './scripts/issue-plan.mjs',
   './scripts/revoke-plan.mjs',
+  './scripts/template-plan.mjs',
   './scripts/run.mjs',
   './scripts/ui.mjs',
   './scripts/concurrency.mjs',
@@ -50,7 +54,8 @@ const MODULES = [
   './scripts/list-templates.mjs',
   './scripts/list-badges.mjs',
   './scripts/issue-badges.mjs',
-  './scripts/revoke-badges.mjs'
+  './scripts/revoke-badges.mjs',
+  './scripts/create-template.mjs'
 ];
 
 test('every module loads without Credly credentials, and importing runs nothing', () => {
