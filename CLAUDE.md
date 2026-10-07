@@ -4,6 +4,11 @@ Command-line tooling for the Credly API. The sibling of `syncjar`, which does
 the same for Skilljar. The two are laid out alike on purpose, and lessons
 learned in one should be carried to the other.
 
+- `docs/credly-api.md`: every endpoint, the permission it needs, and what the
+  reference says beyond the endpoint names. Read it before adding a call.
+- `docs/plans/`: proposed work. `roadmap.md` lists it in order, with what
+  has been done marked as such.
+
 ## Branches and versions
 
 `main` is the release branch. `dev` is the integration branch **and the repo
@@ -13,6 +18,12 @@ the change is a hotfix.
 `dev` is the default on purpose. A new PR — and any bot that opens one —
 targets the default branch, so making it `dev` means nothing arrives on
 `main` un-integrated.
+
+Both branches are protected, with the same settings as syncjar: a PR is
+required with no approvals (a single maintainer can't approve their own
+PR), CI checks `test (20)` and `test (22)` must pass, no force-pushes, no
+deletions, and admins are not exempt. So every change, including docs, goes
+through a PR.
 
 **A back-merge of `main` into `dev` must be merged with a merge commit, not
 squashed.** Squashing breaks `main`'s ancestry of `dev`, and the next release
@@ -51,6 +62,19 @@ Two layers, both required:
 Do not weaken `redactError()` for debugging. Add a field to the safe object
 and check it cannot carry the header.
 
+## CRITICAL: `GET /authorization_tokens` returns every token's secret
+
+Each entry in the response has a `token` field with the credential itself.
+A token with delete permission sees every token in the organization.
+Printing that response, logging it, writing it to `public/data/`, or
+including it in `--json` output leaks every credential the organization
+has.
+
+credjar does not call this endpoint, and nothing in the roadmap needs it. If
+something ever does, drop `token` from each entry immediately after the
+response arrives, before anything else touches it, and add a test in the
+style of the redaction tests that fails if a `token` value survives.
+
 ## Never retry a POST after a 5xx
 
 `shouldRetry()` retries 429 for any method, but 5xx only for idempotent
@@ -80,11 +104,9 @@ page size is 50; no maximum is documented, so `PAGE_SIZE` stays at 50.
 Filters are `filter[key]=value` (`filterParams()` builds them). The older
 `key::value|key::value` syntax is deprecated; don't use it.
 
-Reference: <https://docs.credly.com/browse/reference>. The site is
-JavaScript-rendered, but every page has a `.md` twin with the OpenAPI
-fragment embedded, which greps well:
-`curl -s https://docs.credly.com/browse/reference/post_v1-organizations-organization-id-badges.md`.
-Endpoint slugs are listed in the HTML of `/browse/reference`.
+Reference: <https://docs.credly.com/browse/reference>, with an endpoint map
+in `docs/credly-api.md` that also explains how to read it from the command
+line.
 
 ## CREDLY_ENV is required, never defaulted
 
@@ -142,16 +164,20 @@ Established by syncjar's destructive scripts, and followed here:
 
 - **There is no un-revoke.** `PUT /badges/{id}/revoke` is final; restoring
   means issuing a new badge (new id, new URL, new email).
-- `DELETE /badges/{id}` exists and is **not implemented** here on purpose. It
-  removes the record rather than revoking it. If it is ever added, it needs
-  the same treatment as revoke, and its own confirmation.
-- `POST /badges/{id}/replace` is also not implemented yet.
+- `DELETE /badges/{id}` and `POST /badges/{id}/replace` are **not
+  implemented** on purpose. `docs/plans/replace-and-delete.md` covers what
+  the reference says, what has to be tested in the sandbox first, and the
+  design. In short: replace clears every field not sent, and delete gets its
+  own token.
+- The credjar token should be created **without delete permission**.
+  Nothing credjar does needs it.
 - `POST /authorization_tokens/rotate` immediately invalidates the token that
   makes the call. Don't call it from here.
 
 ## Importing a script must not run it
 
-Entry points (`check`, `list-*`, `issue-badges`, `revoke-badges`) guard
+Entry points (`check`, `list-*`, `issue-badges`, `revoke-badges`,
+`create-template`) guard
 `main()` with `isMain(import.meta.url)`, and the client is built inside
 `main()`, never at module scope. `test/import-without-credentials.test.mjs`
 imports every module in a child process with credentials stripped and cwd
