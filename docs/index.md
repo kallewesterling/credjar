@@ -24,7 +24,7 @@ person or to a CSV of people, and revokes them. It is the Credly counterpart
 to [Syncjar](https://westerling.nu/syncjar/), which does the same kind of
 work for Skilljar.
 
-This documentation covers **Credjar 0.2.0**.
+This documentation covers **Credjar 0.2.1**.
 
 ## What it does
 
