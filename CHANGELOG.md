@@ -10,6 +10,17 @@ and version scheme in `CLAUDE.md`.
 
 ## [Unreleased]
 
+### Added
+
+- A documentation site, built from `docs/` and published to
+  <https://westerling.nu/credjar/>: getting started, configuration
+  (including keeping the token in a password manager), the sandbox, a page
+  per command, a command reference, safety, and the Credly API notes.
+
+### Changed
+
+- `docs/credly-api.md` is now `docs/api-notes.md`, and part of the site.
+
 ## [0.2.0] - 2026-11-26
 
 ### Added

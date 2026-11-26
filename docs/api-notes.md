@@ -1,11 +1,22 @@
-# The Credly API: notes
+---
+title: Credly API notes
+nav_order: 9
+---
 
-A map of the API as the reference documents it, what credjar uses, and what
-the reference says that the endpoint names alone don't. Compiled on
-2026-09-30 from every page of <https://docs.credly.com/browse/reference>
-(45 endpoints) and the guide pages. Where this disagrees with what the live
-API does, the live API wins: record the difference in `CLAUDE.md`, with the
-date.
+# Credly API notes
+{: .no_toc }
+
+A map of the Credly API as its reference documents it, what Credjar uses,
+and what the reference says that the endpoint names alone don't. They're
+useful if you write your own tooling against it. Compiled on 2026-09-30
+from every page of <https://docs.credly.com/browse/reference> (45
+endpoints) and the guide pages. Where this disagrees with what the live API
+does, the live API wins. Credly may change any of it.
+
+1. TOC
+{:toc}
+
+---
 
 ## Reading the reference
 
@@ -59,7 +70,7 @@ and need an authorization token.
 The response includes a `token` field holding **the secret of every listed
 token**, and a token with delete permission sees all of them. A command that
 printed this response, or wrote it to a file, would leak every credential
-the organization has. See `CLAUDE.md`.
+the organization has. Credjar never calls it.
 
 ## Conventions
 
@@ -127,9 +138,9 @@ reference lists; "Scope" is the OAuth scope.
 | `GET /badges/{id}` | read | issued_badges | `revoke` preflight |
 | `POST /badges` | read, write | issued_badges | `issue` |
 | `PUT /badges/{id}/revoke` | read, write | issued_badges | `revoke` |
-| `POST /badges/{id}/replace` | read, write | issued_badges | planned, see `plans/replace-and-delete.md` |
-| `DELETE /badges/{id}` | read, delete | issued_badges | planned, see `plans/replace-and-delete.md` |
-| `GET /high_volume_issued_badge_search` | read | issued_badges | not used; see `plans/roadmap.md` |
+| `POST /badges/{id}/replace` | read, write | issued_badges | not yet; see the [plan](https://github.com/kallewesterling/credjar/blob/dev/docs/plans/replace-and-delete.md) |
+| `DELETE /badges/{id}` | read, delete | issued_badges | not yet; see the [plan](https://github.com/kallewesterling/credjar/blob/dev/docs/plans/replace-and-delete.md) |
+| `GET /high_volume_issued_badge_search` | read | issued_badges | not used; see the [roadmap](https://github.com/kallewesterling/credjar/blob/dev/docs/plans/roadmap.md) |
 
 - **Filters** on `GET /badges`: `badge_template_id`, `recipient_email`,
   `recipient_email_all`, `issuer_earner_id`, `user_id`, `issuer_id`,
@@ -152,7 +163,9 @@ reference lists; "Scope" is the OAuth scope.
 - **Revoke** takes `reason` (required) and
   `suppress_revoke_notification_email`.
 - **Replace** takes the issue fields except that `recipient_email` is
-  optional, plus `notification_message`. See the plan for its traps.
+  optional, plus `notification_message`. See the
+  [plan](https://github.com/kallewesterling/credjar/blob/dev/docs/plans/replace-and-delete.md)
+  for its traps.
 - **Delete:** replaced badges can't be deleted (422).
 
 ### Badge templates
@@ -201,7 +214,7 @@ The client secret is shown only once, on create.
 
 | Method and path | Token | Scope | credjar |
 |---|---|---|---|
-| `GET /events` | read (not listed) | events | no; see `plans/roadmap.md` |
+| `GET /events` | read (not listed) | events | no; see the [roadmap](https://github.com/kallewesterling/credjar/blob/dev/docs/plans/roadmap.md) |
 | `GET /events/{id}` | read (not listed) | events | no |
 
 Event types: `badge.created`, `badge.deleted`, `badge.state.changed`,
