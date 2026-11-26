@@ -14,10 +14,11 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
  * A child process, because the parent may already have a .env loaded. The
  * child runs from a temp directory because `dotenv.config()` reads
  * `<cwd>/.env`; running from the repo would load the developer's own token
- * and the test would pass for the very reason it is meant to catch.
+ * and the test would pass for the very reason it is meant to catch. The
+ * Keychain is switched off for the same reason.
  */
 function importWithoutCredentials(relativeModule) {
-  const env = { ...process.env };
+  const env = { ...process.env, CREDJAR_NO_KEYCHAIN: '1' };
   delete env.CREDLY_API_TOKEN;
   delete env.CREDLY_ORG_ID;
   delete env.CREDLY_ENV;
@@ -49,6 +50,7 @@ const MODULES = [
   './scripts/ui.mjs',
   './scripts/concurrency.mjs',
   './scripts/cli.mjs',
+  './scripts/keychain.mjs',
   // The entry points too. Each guards its main() with isMain(), so importing
   // one must neither need credentials nor run the command.
   './scripts/check.mjs',

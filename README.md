@@ -33,10 +33,13 @@ Requires Node 20 or later.
 git clone https://github.com/kallewesterling/credjar.git
 cd credjar
 npm install
-cp .env-example .env
 ```
 
-Fill in `.env`:
+Credjar needs these settings. Keep them out of `.env` files, which hold the
+token in plain text: on a Mac, store each one in the Keychain, where credjar
+finds it by itself (`security add-generic-password -U -s credjar -a
+CREDLY_API_TOKEN -w` prompts for the value), or have a password manager
+supply them. The documentation site's Configuration page shows how.
 
 | Setting | Where to find it |
 |---|---|
@@ -98,16 +101,12 @@ would remove the command and leave nothing to update from. From a clone,
 including one linked with `npm link`, it refuses outright and asks you to
 `git pull` instead.
 
-Settings come from a `.env` in the current directory, then from
-`~/.config/credjar/.env` (`$XDG_CONFIG_HOME/credjar/.env`, or
-`%APPDATA%\credjar\.env` on Windows). A variable set in the shell wins over
-both. Each setting is looked up on its own, so keep a token, its
-organization ID and `CREDLY_ENV` together in one file. Put the user-level
-file somewhere only you can read:
-
-```bash
-mkdir -p ~/.config/credjar && touch ~/.config/credjar/.env && chmod 600 ~/.config/credjar/.env
-```
+A variable set in the shell wins over everything, then a `.env` in the
+current directory, then `~/.config/credjar/.env`
+(`$XDG_CONFIG_HOME/credjar/.env`, or `%APPDATA%\credjar\.env` on Windows),
+then the macOS Keychain (service `credjar`, account the variable's name).
+Each setting is looked up on its own, so keep a token, its organization ID
+and `CREDLY_ENV` together in one place, ideally the Keychain.
 
 Outside a clone, exports and audit files go to `public/data/` under the
 current directory, never into the install, which the next `credjar update`

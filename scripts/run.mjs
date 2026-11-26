@@ -60,7 +60,7 @@ export function baseParser(args = hideBin(process.argv)) {
     .option('sandbox', {
       type: 'boolean',
       default: false,
-      describe: 'Use the Credly sandbox, with the CREDLY_SANDBOX_* settings from .env'
+      describe: 'Use the Credly sandbox, with the CREDLY_SANDBOX_* settings'
     })
     .strictOptions()
     .wrap(Math.min(110, process.stdout.columns || 110))
