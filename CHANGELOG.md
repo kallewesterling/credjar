@@ -10,6 +10,24 @@ and version scheme in `CLAUDE.md`.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-26
+
+### Added
+
+- A global `credjar` command, installed with
+  `npm install --global github:kallewesterling/credjar#main`. Every npm
+  script is a subcommand (`credjar issue --dry-run`), and settings are read
+  from `.env` in the current directory, then `~/.config/credjar/.env`.
+- `credjar update [--ref <ref>] [--force]` reinstalls from GitHub, skipping
+  the install when that commit is already the one installed, and refusing a
+  ref that doesn't provide the command.
+
+### Changed
+
+- Outside a clone, exports and audit files go to `public/data/` under the
+  current directory instead of into the install, which `credjar update`
+  replaces.
+
 ## [0.1.0] - 2026-10-07
 
 The first release. Tested against the Credly sandbox and, read-only,
@@ -49,5 +67,6 @@ against production.
 - `package.json` is marked `private`, so `npm publish` refuses to run, and
   `.gitignore` covers every `.env.*` file.
 
-[Unreleased]: https://github.com/kallewesterling/credjar/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/kallewesterling/credjar/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/kallewesterling/credjar/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kallewesterling/credjar/releases/tag/v0.1.0

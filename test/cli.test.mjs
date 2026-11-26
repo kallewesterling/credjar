@@ -1,0 +1,190 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
+
+import {
+  INSTALL_RECORD,
+  commandTable,
+  commitUrl,
+  configDir,
+  envFiles,
+  githubRepo,
+  installSpec,
+  layeredEnv,
+  parseCommit,
+  providesCommand,
+  rawPackageUrl,
+  readInstallRecord,
+  updateDecision
+} from '../scripts/cli.mjs';
+
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+
+test('every npm script that runs a command becomes a subcommand, and test does not', () => {
+  const table = commandTable(pkg.scripts);
+  assert.equal(table.get('issue'), 'scripts/issue-badges.mjs');
+  assert.equal(table.get('templates:create'), 'scripts/create-template.mjs');
+  assert.equal(table.has('test'), false);
+  for (const file of table.values()) {
+    assert.ok(fs.existsSync(path.join(root, file)), `${file} does not exist`);
+  }
+});
+
+test('every command file is in the published package', () => {
+  for (const file of [...commandTable(pkg.scripts).values(), pkg.bin.credjar]) {
+    assert.ok(pkg.files.some((dir) => file.startsWith(dir)), `${file} is not under "files" in package.json`);
+  }
+});
+
+test('the user config dir follows XDG, then ~/.config, and APPDATA on Windows', () => {
+  assert.equal(configDir({ env: { XDG_CONFIG_HOME: '/x' }, platform: 'darwin', home: '/h' }), path.join('/x', 'credjar'));
+  assert.equal(configDir({ env: {}, platform: 'linux', home: '/h' }), path.join('/h', '.config', 'credjar'));
+  assert.equal(configDir({ env: { APPDATA: 'C:\\A' }, platform: 'win32', home: '/h' }), path.join('C:\\A', 'credjar'));
+});
+
+test('the shell beats cwd .env, which beats the clone .env, which beats the user config', () => {
+  const files = envFiles({ cwd: '/work', checkoutRoot: '/clone', userConfigDir: '/cfg' });
+  assert.deepEqual(files, ['/cfg/.env', '/clone/.env', '/work/.env']);
+
+  const contents = {
+    '/cfg/.env': 'A=cfg\nB=cfg\nC=cfg\nD=cfg\n',
+    '/clone/.env': 'B=clone\nC=clone\nD=clone\n',
+    '/work/.env': 'C=work\nD=work\n'
+  };
+  const read = (file) => {
+    if (!(file in contents)) throw new Error('ENOENT');
+    return contents[file];
+  };
+  assert.deepEqual(layeredEnv(files, { D: 'shell' }, read), { A: 'cfg', B: 'clone', C: 'work', D: 'shell' });
+});
+
+test('missing .env files are skipped', () => {
+  const read = () => { throw new Error('ENOENT'); };
+  assert.deepEqual(layeredEnv(['/nope/.env'], { X: '1' }, read), { X: '1' });
+});
+
+test('the GitHub repository is read from package.json in either form', () => {
+  assert.equal(githubRepo(pkg.repository), 'kallewesterling/credjar');
+  assert.equal(githubRepo('github:o/r'), 'o/r');
+  assert.equal(githubRepo('o/r'), 'o/r');
+  assert.equal(githubRepo({ url: 'git@github.com:o/r.git' }), 'o/r');
+  assert.equal(githubRepo({ url: 'https://gitlab.com/o/r.git' }), null);
+  assert.equal(githubRepo(undefined), null);
+});
+
+test('the install spec takes branches, tags and commits, and nothing that could be an npm flag', () => {
+  assert.equal(installSpec('o/r', 'main'), 'github:o/r#main');
+  assert.equal(installSpec('o/r', 'feature/x'), 'github:o/r#feature/x');
+  assert.equal(installSpec('o/r', 'v0.2.0'), 'github:o/r#v0.2.0');
+  assert.throws(() => installSpec('o/r', ''));
+  assert.throws(() => installSpec('o/r', '--registry=x'));
+  assert.throws(() => installSpec('o/r', 'main; rm -rf ~'));
+});
+
+test('update only installs a ref whose package.json still provides the command', () => {
+  assert.equal(providesCommand(pkg), true);
+  assert.equal(providesCommand({ name: 'credjar', scripts: {} }), false);
+  assert.equal(providesCommand(undefined), false);
+  assert.equal(rawPackageUrl('o/r', 'feature/x'), 'https://raw.githubusercontent.com/o/r/feature/x/package.json');
+});
+
+const SHA_A = 'bfd45f3a0ce460b289313c0b8d520747b47c9e3d';
+const SHA_B = '4866d00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+test('update resolves a ref to a full commit and nothing else', () => {
+  assert.equal(commitUrl('o/r', 'feature/x'), 'https://api.github.com/repos/o/r/commits/feature%2Fx');
+  assert.equal(parseCommit(`${SHA_A}\n`), SHA_A);
+  assert.equal(parseCommit('bfd45f3'), null);
+  assert.equal(parseCommit('{"message":"Not Found"}'), null);
+  assert.equal(parseCommit(undefined), null);
+});
+
+test('update skips only when the recorded commit is the one it would install', () => {
+  const record = { ref: 'main', commit: SHA_A };
+  assert.deepEqual(updateDecision({ record, commit: SHA_A }), { install: false, reason: 'already installed' });
+  assert.equal(updateDecision({ record, commit: SHA_A, force: true }).install, true);
+  assert.deepEqual(updateDecision({ record, commit: SHA_B }), { install: true, reason: 'installed commit is bfd45f3' });
+  assert.equal(updateDecision({ record: { ...record, ref: 'dev' }, commit: SHA_A }).install, false);
+  assert.equal(updateDecision({ record: null, commit: SHA_A }).install, true);
+});
+
+test('an install record that is missing or malformed reads as none', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'credjar-record-'));
+  assert.equal(readInstallRecord(dir), null);
+  fs.writeFileSync(path.join(dir, INSTALL_RECORD), 'not json');
+  assert.equal(readInstallRecord(dir), null);
+  fs.writeFileSync(path.join(dir, INSTALL_RECORD), JSON.stringify({ commit: 'bfd45f3' }));
+  assert.equal(readInstallRecord(dir), null);
+  fs.writeFileSync(path.join(dir, INSTALL_RECORD), JSON.stringify({ ref: 'main', commit: SHA_A }));
+  assert.deepEqual(readInstallRecord(dir), { ref: 'main', commit: SHA_A });
+  fs.rmSync(dir, { recursive: true });
+});
+
+/**
+ * `public/data/` holds the audit records of live runs. In a packaged install
+ * it must not sit inside the install, which the next `credjar update`
+ * deletes. A copy of `scripts/` without `.git` stands in for one.
+ */
+test('outputs go to the clone from a clone, and to the current directory from an install', () => {
+  const dataDir = (installRoot, cwd) => execFileSync(
+    process.execPath,
+    ['--input-type=module', '-e',
+      `const { DATA_DIR } = await import(${JSON.stringify(pathToFileURL(path.join(installRoot, 'scripts', 'run.mjs')).href)});
+       console.log(DATA_DIR);`],
+    { cwd, stdio: ['ignore', 'pipe', 'pipe'] }
+  ).toString().trim();
+
+  const install = fs.mkdtempSync(path.join(os.tmpdir(), 'credjar-install-'));
+  const work = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'credjar-work-')));
+  try {
+    fs.cpSync(path.join(root, 'scripts'), path.join(install, 'scripts'), { recursive: true });
+    fs.copyFileSync(path.join(root, 'package.json'), path.join(install, 'package.json'));
+    fs.symlinkSync(path.join(root, 'node_modules'), path.join(install, 'node_modules'), 'dir');
+
+    assert.equal(dataDir(install, work), path.join(work, 'public', 'data'));
+    assert.equal(dataDir(root, work), path.join(root, 'public', 'data'));
+  } finally {
+    fs.rmSync(install, { recursive: true });
+    fs.rmSync(work, { recursive: true });
+  }
+});
+
+function credjar(args, cwd = os.tmpdir()) {
+  try {
+    const stdout = execFileSync(process.execPath, [path.join(root, 'bin', 'credjar.mjs'), ...args], {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    return { code: 0, out: stdout.toString() };
+  } catch (err) {
+    return { code: err.status, out: `${err.stdout}${err.stderr}` };
+  }
+}
+
+test('credjar help lists the commands, and an unknown command fails', () => {
+  const help = credjar(['help']);
+  assert.equal(help.code, 0);
+  assert.match(help.out, /templates:create/);
+  assert.match(help.out, /credjar update/);
+
+  const unknown = credjar(['no-such-command']);
+  assert.equal(unknown.code, 1);
+  assert.match(unknown.out, /Unknown command: no-such-command/);
+});
+
+test('credjar passes options through to the command', () => {
+  const res = credjar(['issue', '--help']);
+  assert.equal(res.code, 0);
+  assert.match(res.out, /--template/);
+});
+
+test('credjar update refuses to reinstall over a clone', () => {
+  const res = credjar(['update']);
+  assert.equal(res.code, 1);
+  assert.match(res.out, /git clone/);
+});

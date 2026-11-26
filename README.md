@@ -61,6 +61,54 @@ Then check the connection:
 npm run check
 ```
 
+### Installing the `credjar` command
+
+To run credjar from any directory without a clone, install it globally from
+GitHub:
+
+```bash
+npm install --global github:kallewesterling/credjar#main
+```
+
+Every command below is then a subcommand, taking the same options without
+the `--`:
+
+```bash
+credjar help                              # list commands
+credjar badges --state accepted           # = npm run badges -- --state accepted
+credjar update                            # install the latest main from GitHub
+credjar update --ref dev                  # or any branch, tag or commit
+credjar update --force                    # reinstall even if it's already installed
+```
+
+`credjar update` looks up the commit the ref points at and does nothing if
+that commit is already installed. It goes by commit rather than version,
+because every commit on a branch carries the version of the last release.
+The first update after a plain `npm install --global` always installs, since
+npm keeps no record of which commit it installed; `update` keeps one from
+then on.
+
+It also reads `package.json` at that commit before installing, and refuses
+a ref that doesn't provide the `credjar` command, because installing one
+would remove the command and leave nothing to update from. From a clone,
+including one linked with `npm link`, it refuses outright and asks you to
+`git pull` instead.
+
+Settings come from a `.env` in the current directory, then from
+`~/.config/credjar/.env` (`$XDG_CONFIG_HOME/credjar/.env`, or
+`%APPDATA%\credjar\.env` on Windows). A variable set in the shell wins over
+both. Each setting is looked up on its own, so keep a token, its
+organization ID and `CREDLY_ENV` together in one file. Put the user-level
+file somewhere only you can read:
+
+```bash
+mkdir -p ~/.config/credjar && touch ~/.config/credjar/.env && chmod 600 ~/.config/credjar/.env
+```
+
+Outside a clone, exports and audit files go to `public/data/` under the
+current directory, never into the install, which the next `credjar update`
+replaces.
+
 ## Commands
 
 | Command | What it does | Writes to Credly |
