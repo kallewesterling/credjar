@@ -11,6 +11,7 @@
  */
 import path from 'path';
 import fs from 'fs/promises';
+import { existsSync } from 'fs';
 import readline from 'node:readline/promises';
 import { fileURLToPath, pathToFileURL } from 'url';
 import yargs from 'yargs';
@@ -18,8 +19,26 @@ import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
 import { toCsv } from './csv.mjs';
 
+/**
+ * The root of the credjar install. In a clone this is the clone; after
+ * `npm install -g` it is a directory inside npm's global `node_modules`,
+ * which `credjar update` replaces wholesale.
+ */
 export const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const DATA_DIR = path.join(REPO_ROOT, 'public', 'data');
+
+/**
+ * True when credjar is running from a git clone, including one linked
+ * globally with `npm link`, rather than from a packaged install.
+ */
+export const IS_CHECKOUT = existsSync(path.join(REPO_ROOT, '.git'));
+
+/**
+ * Where exports and audit files go: the clone's `public/data/`, or
+ * `public/data/` under the directory the command was run from. A packaged
+ * install must not be written into, because the next `credjar update`
+ * deletes it, audit records included.
+ */
+export const DATA_DIR = path.join(IS_CHECKOUT ? REPO_ROOT : process.cwd(), 'public', 'data');
 
 /**
  * True when `metaUrl` is the script node was asked to run, rather than one

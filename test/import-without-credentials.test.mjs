@@ -48,6 +48,7 @@ const MODULES = [
   './scripts/run.mjs',
   './scripts/ui.mjs',
   './scripts/concurrency.mjs',
+  './scripts/cli.mjs',
   // The entry points too. Each guards its main() with isMain(), so importing
   // one must neither need credentials nor run the command.
   './scripts/check.mjs',
