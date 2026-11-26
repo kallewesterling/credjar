@@ -10,6 +10,13 @@ and version scheme in `CLAUDE.md`.
 
 ## [Unreleased]
 
+### Added
+
+- Pushing a version tag publishes its GitHub Release, with that version's
+  changelog section as the notes, as syncjar does. Tags 0.2.0 to 0.3.1 had
+  been pushed without one, so the repo's Releases panel still showed 0.1.0
+  as latest; they have been backfilled.
+
 ## [0.3.1] - 2026-11-26
 
 ### Added

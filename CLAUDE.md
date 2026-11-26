@@ -70,6 +70,20 @@ At that moment, and not before: promote `## [Unreleased]` in `CHANGELOG.md`
 to `## [X.Y.Z] - YYYY-MM-DD` with a fresh `[Unreleased]` above it, and set
 `version` in `package.json` to match. `package.json` lags `dev` on purpose.
 
+Both land in the commit the tag points at, because pushing the tag is what
+publishes the GitHub Release. `.github/workflows/release.yaml`, copied from
+syncjar's, creates it, titled `credjar X.Y.Z`, with that version's
+`CHANGELOG.md` section, read at the tagged commit, as its notes. It fails
+rather than publish an empty Release if the section is missing. A tag alone
+does not appear under Releases: 0.2.0 to 0.3.1 were pushed before the
+workflow existed, and weren't Releases until they were backfilled on
+2026-11-26. If the workflow fails, fix the changelog and rerun the job, or
+create the Release by hand:
+
+```bash
+gh release create vX.Y.Z --verify-tag --title "credjar X.Y.Z" --notes-file <section>
+```
+
 ## CRITICAL: never let a raw axios error reach the console
 
 Credly authenticates with HTTP Basic, the authorization token as username and
