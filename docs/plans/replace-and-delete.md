@@ -13,7 +13,7 @@ issued badge, and credjar leaves both out on purpose for now:
 
 This plan covers what each is for, what the API reference says about it, what
 still has to be tested in the sandbox, and how each command should behave.
-The API facts it relies on are collected in [`../credly-api.md`](../credly-api.md).
+The API facts it relies on are collected in [`../api-notes.md`](../api-notes.md).
 
 ## Why they are not in 0.x
 

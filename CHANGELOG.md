@@ -10,6 +10,19 @@ and version scheme in `CLAUDE.md`.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-26
+
+### Added
+
+- A documentation site, built from `docs/` and published to
+  <https://westerling.nu/credjar/>: getting started, configuration
+  (including keeping the token in a password manager), the sandbox, a page
+  per command, a command reference, safety, and the Credly API notes.
+
+### Changed
+
+- `docs/credly-api.md` is now `docs/api-notes.md`, and part of the site.
+
 ## [0.2.0] - 2026-11-26
 
 ### Added
@@ -67,6 +80,7 @@ against production.
 - `package.json` is marked `private`, so `npm publish` refuses to run, and
   `.gitignore` covers every `.env.*` file.
 
-[Unreleased]: https://github.com/kallewesterling/credjar/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/kallewesterling/credjar/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/kallewesterling/credjar/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kallewesterling/credjar/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kallewesterling/credjar/releases/tag/v0.1.0

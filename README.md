@@ -8,6 +8,10 @@
   The Credly counterpart to <a href="https://github.com/kallewesterling/syncjar">syncjar</a>.
 </p>
 
+<p align="center">
+  <a href="https://westerling.nu/credjar/"><strong>Documentation</strong></a>
+</p>
+
 ---
 
 **Credjar** is a small command-line tool for the [Credly](https://credly.com/)
