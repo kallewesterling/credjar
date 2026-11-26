@@ -35,32 +35,15 @@ cd credjar
 npm install
 ```
 
-Credjar needs these settings. Keep them out of `.env` files, which hold the
-token in plain text: on a Mac, store each one in the Keychain, where credjar
-finds it by itself (`security add-generic-password -U -s credjar -a
-CREDLY_API_TOKEN -w` prompts for the value), or have a password manager
-supply them. The documentation site's Configuration page shows how.
+Credjar needs an authorization token, your organization's ID and
+`CREDLY_ENV`. [Configuration](https://westerling.nu/credjar/configuration.html#settings)
+explains where to find each one and how to store them: in the macOS Keychain
+or a password manager, not in a `.env` file.
 
-| Setting | Where to find it |
-|---|---|
-| `CREDLY_API_TOKEN` | Credly → Organization Management → Developers → Authorization Tokens. Tokens expire after 180 days. |
-| `CREDLY_ORG_ID` | The UUID at the top of any tab in the Developers section. |
-| `CREDLY_ENV` | `sandbox` or `production`. Required. A token only works in its own environment. |
-| `CREDLY_SANDBOX_API_TOKEN`, `CREDLY_SANDBOX_ORG_ID` | Optional. The sandbox's token and organization ID, used by `--sandbox`. See below. |
-
-### Create the token with read and write only
-
-When you add the token in Credly, tick **read** and **write** and leave
-**delete** unticked. Do the same for the sandbox token.
-
-Nothing credjar does needs delete. Issuing and revoking need write, and
-both leave a visible record: an issued badge or a revoked one, with its
-reason. Delete removes a badge's record entirely. Without delete permission,
-no bug in credjar or in a script you write with it can remove a badge.
-
-Credly's OAuth scopes don't help here: the `issued_badges` scope covers
-deleting as well as issuing, so a token without delete is the narrowest
-credential available.
+**Create the token with read and write only, never delete.** Nothing credjar
+does needs delete, and without it no bug can remove a badge's record;
+[Configuration](https://westerling.nu/credjar/configuration.html#the-authorization-token)
+explains why.
 
 Then check the connection:
 
@@ -101,12 +84,9 @@ would remove the command and leave nothing to update from. From a clone,
 including one linked with `npm link`, it refuses outright and asks you to
 `git pull` instead.
 
-A variable set in the shell wins over everything, then a `.env` in the
-current directory, then `~/.config/credjar/.env`
-(`$XDG_CONFIG_HOME/credjar/.env`, or `%APPDATA%\credjar\.env` on Windows),
-then the macOS Keychain (service `credjar`, account the variable's name).
-Each setting is looked up on its own, so keep a token, its organization ID
-and `CREDLY_ENV` together in one place, ideally the Keychain.
+The global command finds settings the same way a clone does;
+[Configuration](https://westerling.nu/credjar/configuration.html#where-settings-are-read-from)
+lists where settings are read from.
 
 Outside a clone, exports and audit files go to `public/data/` under the
 current directory, never into the install, which the next `credjar update`

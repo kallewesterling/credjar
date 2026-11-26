@@ -1,6 +1,7 @@
 ---
 title: Getting started
 nav_order: 2
+description: Install the credjar command or run it from a clone, add your settings, and check the connection.
 ---
 
 # Getting started
@@ -30,7 +31,7 @@ npm install --global github:kallewesterling/credjar#main
 ```
 
 `main` holds the latest release. To pin one, name its tag instead, for
-example `#v0.3.0`. Then check it works:
+example `#v0.3.1`. Then check it works:
 
 ```bash
 credjar help       # every command, and where settings are read from
@@ -41,7 +42,7 @@ credjar --version
 
 ```bash
 credjar update                  # the latest release
-credjar update --ref v0.3.0     # a specific tag, branch or commit
+credjar update --ref v0.3.1     # a specific tag, branch or commit
 credjar update --force          # reinstall even if it's already installed
 ```
 

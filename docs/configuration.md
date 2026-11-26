@@ -1,6 +1,7 @@
 ---
 title: Configuration
 nav_order: 3
+description: Where Credjar reads its settings from, how to create the Credly authorization token, and how to keep it out of files.
 ---
 
 # Configuration

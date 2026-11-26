@@ -2,6 +2,7 @@
 title: Command reference
 nav_order: 7
 permalink: /reference/commands/
+description: Every Credjar command and option, whether it writes to Credly, and what token permissions it needs.
 ---
 
 # Command reference

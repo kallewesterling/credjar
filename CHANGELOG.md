@@ -10,6 +10,20 @@ and version scheme in `CLAUDE.md`.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-26
+
+### Added
+
+- The docs site publishes [`llms.txt`](https://llmstxt.org/), an index for
+  LLMs and coding agents, with `llms-full.txt` holding every page and a
+  plain-Markdown copy of each page beside its HTML (`issuing.md` beside
+  `issuing.html`). Every page now has a `description`.
+
+### Changed
+
+- The README no longer repeats the settings table, the token permissions or
+  how to store the token; it links to the Configuration page instead.
+
 ## [0.3.0] - 2026-11-26
 
 ### Added
@@ -95,7 +109,8 @@ against production.
 - `package.json` is marked `private`, so `npm publish` refuses to run, and
   `.gitignore` covers every `.env.*` file.
 
-[Unreleased]: https://github.com/kallewesterling/credjar/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/kallewesterling/credjar/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/kallewesterling/credjar/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/kallewesterling/credjar/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kallewesterling/credjar/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kallewesterling/credjar/compare/v0.1.0...v0.2.0

@@ -2,6 +2,7 @@
 title: Revoke badges
 parent: Badges
 nav_order: 3
+description: Revoke badges by id or from a CSV export. Credly has no un-revoke.
 ---
 
 # Revoking badges: `revoke`
