@@ -1,6 +1,6 @@
 {
   "name": "credjar",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Inspect, issue, and revoke Credly badges from the command line.",
   "type": "module",
