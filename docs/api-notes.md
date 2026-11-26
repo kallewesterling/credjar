@@ -1,6 +1,7 @@
 ---
 title: Credly API notes
 nav_order: 9
+description: A map of the Credly API endpoints, the permissions they need, and what the reference says beyond their names.
 ---
 
 # Credly API notes

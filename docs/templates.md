@@ -1,6 +1,7 @@
 ---
 title: Templates
 nav_order: 5
+description: List badge templates and their ids, and create a new template from a JSON file and a PNG.
 ---
 
 # Badge templates

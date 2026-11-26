@@ -10,6 +10,13 @@ and version scheme in `CLAUDE.md`.
 
 ## [Unreleased]
 
+### Added
+
+- The docs site publishes [`llms.txt`](https://llmstxt.org/), an index for
+  LLMs and coding agents, with `llms-full.txt` holding every page and a
+  plain-Markdown copy of each page beside its HTML (`issuing.md` beside
+  `issuing.html`). Every page now has a `description`.
+
 ## [0.3.0] - 2026-11-26
 
 ### Added

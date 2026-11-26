@@ -58,7 +58,8 @@ const MODULES = [
   './scripts/list-badges.mjs',
   './scripts/issue-badges.mjs',
   './scripts/revoke-badges.mjs',
-  './scripts/create-template.mjs'
+  './scripts/create-template.mjs',
+  './tools/llms-docs.mjs'
 ];
 
 test('every module loads without Credly credentials, and importing runs nothing', () => {

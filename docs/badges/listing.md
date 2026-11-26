@@ -2,6 +2,7 @@
 title: List badges
 parent: Badges
 nav_order: 1
+description: List issued badges by template, email, state or date, and export them as CSV.
 ---
 
 # Listing badges: `badges`

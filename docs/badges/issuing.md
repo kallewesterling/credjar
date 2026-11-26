@@ -2,6 +2,7 @@
 title: Issue badges
 parent: Badges
 nav_order: 2
+description: Issue a badge to one person or to a CSV of people, skipping anyone who already holds it.
 ---
 
 # Issuing badges: `issue`

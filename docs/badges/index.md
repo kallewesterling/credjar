@@ -3,6 +3,7 @@ title: Badges
 nav_order: 6
 has_children: true
 permalink: /badges/
+description: The commands for listing, issuing and revoking badges, and the states a badge can be in.
 ---
 
 # Badges
