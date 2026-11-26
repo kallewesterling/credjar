@@ -194,6 +194,24 @@ throws **or prints anything**. Add new modules to its list.
 
 `node --check <file>` for syntax; `npm test` for behaviour.
 
+## The global command
+
+`bin/credjar.mjs` is syncjar's `bin/syncjar.mjs` with the preview commands
+taken out; its helpers are in `scripts/cli.mjs` and tested in
+`test/cli.test.mjs`. Every `node scripts/….mjs` npm script is a subcommand,
+so a new script needs no CLI change, but its file must be under `files` in
+`package.json` (a test checks).
+
+- **A packaged install must never be written into.** `credjar update`
+  replaces it wholesale. `DATA_DIR` is the clone's `public/data/` from a
+  clone (`IS_CHECKOUT`: there is a `.git`) and `<cwd>/public/data/`
+  otherwise. Anything new that writes to disk resolves the same way.
+- **`update` goes by commit, not version,** since `package.json` lags `dev`.
+  It writes `.credjar-install.json` into the install, and refuses a ref
+  whose `package.json` has no `bin.credjar`: installing that would remove
+  the command. So `credjar update` from `main` works only once a release
+  carrying the CLI has merged.
+
 ## Data hygiene
 
 - `public/data/` is gitignored (except `.gitkeep`). Exports and audit files
