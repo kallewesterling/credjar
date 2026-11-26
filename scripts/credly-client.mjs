@@ -16,11 +16,12 @@
  * 2. Callers still catch, and report through failCleanly().
  *
  * Nothing here runs on import, and the client is built only when asked for,
- * so modules that import this one load fine on a machine with no .env.
+ * so modules that import this one load fine on a machine with no settings.
  */
 import axios from 'axios';
 import dotenv from 'dotenv';
 import chalk from 'chalk';
+import { withKeychain } from './keychain.mjs';
 
 dotenv.config({ quiet: true });
 
@@ -130,12 +131,12 @@ export function failCleanly(err, context) {
   // Which settings to point at depends on --sandbox, which this function
   // can't see, so name both sets.
   if (status === 401 || status === 403) {
-    console.error(chalk.yellow('   Check the token in .env: CREDLY_API_TOKEN, or CREDLY_SANDBOX_API_TOKEN'));
+    console.error(chalk.yellow('   Check the token: CREDLY_API_TOKEN, or CREDLY_SANDBOX_API_TOKEN'));
     console.error(chalk.yellow('   with --sandbox. A sandbox token does not work in production, or the'));
     console.error(chalk.yellow('   other way round.'));
   }
   if (status === 404) {
-    console.error(chalk.yellow('   Check the organization ID in .env: CREDLY_ORG_ID, or CREDLY_SANDBOX_ORG_ID'));
+    console.error(chalk.yellow('   Check the organization ID: CREDLY_ORG_ID, or CREDLY_SANDBOX_ORG_ID'));
     console.error(chalk.yellow('   with --sandbox. An organization ID belongs to one environment only.'));
   }
   process.exit(1);
@@ -163,14 +164,15 @@ export const SETTING_NAMES = {
  * a production token pasted into the sandbox settings can only fail with a
  * 401; it can't reach production.
  */
-export function readConfig(env = process.env, { sandbox = false } = {}) {
+export function readConfig(env = withKeychain(), { sandbox = false } = {}) {
   const names = sandbox ? SETTING_NAMES.sandbox : SETTING_NAMES.default;
   const token = env[names.token];
   const orgId = env[names.orgId];
   const fallbackNote = sandbox ? ' --sandbox never falls back to the production settings.' : '';
+  const where = 'Store it in the macOS Keychain, or set it in the environment from a password manager.';
 
-  if (!token) throw new Error(`${names.token} is not set. Add it to your .env file.${fallbackNote}`);
-  if (!orgId) throw new Error(`${names.orgId} is not set. Add it to your .env file.${fallbackNote}`);
+  if (!token) throw new Error(`${names.token} is not set. ${where}${fallbackNote}`);
+  if (!orgId) throw new Error(`${names.orgId} is not set. ${where}${fallbackNote}`);
 
   let environment;
   if (sandbox) {
@@ -187,7 +189,7 @@ export function readConfig(env = process.env, { sandbox = false } = {}) {
     // Required rather than defaulted: an unset value silently meaning
     // production is how a test run issues real badges.
     if (!environment) {
-      throw new Error(`${names.environment} is not set. Set it to "production" or "sandbox" in your .env file.`);
+      throw new Error(`${names.environment} is not set. Set it to "production" or "sandbox", in the Keychain or the environment.`);
     }
     if (!BASE_URLS[environment]) {
       throw new Error(`${names.environment} is "${environment}". It must be "production" or "sandbox".`);
@@ -206,7 +208,7 @@ export function readConfig(env = process.env, { sandbox = false } = {}) {
  * The returned client also carries `orgId` and `environment`, so callers can
  * say where they are about to write.
  */
-export function createCredlyClient({ sandbox = false, env = process.env } = {}) {
+export function createCredlyClient({ sandbox = false, env = withKeychain() } = {}) {
   const { token, orgId, environment, baseURL } = readConfig(env, { sandbox });
 
   const client = axios.create({

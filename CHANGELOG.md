@@ -10,6 +10,19 @@ and version scheme in `CLAUDE.md`.
 
 ## [Unreleased]
 
+### Added
+
+- Settings can come from the macOS Keychain. Each `CREDLY_*` setting is
+  looked up as a generic password with the service `credjar` and the
+  variable's name as the account, only when it isn't set already, so the
+  shell and any `.env` still win. `CREDJAR_NO_KEYCHAIN=1` turns it off.
+
+### Changed
+
+- The docs, `credjar help`, `.env-example` and the "not set" errors now
+  steer the token to the Keychain or a password manager and away from
+  `.env` files.
+
 ## [0.2.1] - 2026-11-26
 
 ### Added

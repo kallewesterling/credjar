@@ -2,7 +2,7 @@
  * check.mjs — `npm run check`: confirm the credentials work and say where
  * they point.
  *
- * Run it first on a new .env. It reads the organization and one page of
+ * Run it first on new settings. It reads the organization and one page of
  * badge templates, and writes nothing, so `--dry-run` changes nothing here;
  * it is accepted so every command takes the same flags.
  */
@@ -14,7 +14,7 @@ import { ok, fail, muted } from './ui.mjs';
 
 async function main() {
   const argv = baseParser()
-    .usage('npm run check [-- --sandbox]\n\nConfirm the Credly credentials in .env work.')
+    .usage('npm run check [-- --sandbox]\n\nConfirm the Credly credentials work.')
     .parseSync();
 
   let client;

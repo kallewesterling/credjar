@@ -211,6 +211,12 @@ imports every module in a child process with credentials stripped and cwd
 moved away from the repo (so `.env` can't mask it), and fails if an import
 throws **or prints anything**. Add new modules to its list.
 
+The Keychain could mask it too. `withKeychain()` (`scripts/keychain.mjs`)
+fills unset settings from the macOS Keychain, and runs only as the default
+`env` of `readConfig` and `createCredlyClient`, never on import. So that
+test sets `CREDJAR_NO_KEYCHAIN`, and a test that expects "not set" must do
+the same or pass `env` explicitly, as `test/credly-client.test.mjs` does.
+
 `node --check <file>` for syntax; `npm test` for behaviour.
 
 ## The global command

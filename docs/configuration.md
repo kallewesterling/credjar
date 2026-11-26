@@ -13,18 +13,21 @@ nav_order: 3
 
 ## Where settings are read from
 
-Credjar is configured with environment variables, usually kept in `.env`
-files. They are read in this order, and a later one wins over an earlier
-one:
+Credjar is configured with environment variables. They are read in this
+order, and a later one wins over an earlier one:
 
-1. `~/.config/credjar/.env`. That is `$XDG_CONFIG_HOME/credjar/.env` when
+1. The macOS Keychain. See [macOS Keychain](#macos-keychain).
+2. `~/.config/credjar/.env`. That is `$XDG_CONFIG_HOME/credjar/.env` when
    `XDG_CONFIG_HOME` is set, and `%APPDATA%\credjar\.env` on Windows.
-2. The clone's own `.env`, when running from a clone.
-3. `.env` in the current directory.
-4. Variables already set in your shell, which win over every file.
+3. The clone's own `.env`, when running from a clone.
+4. `.env` in the current directory.
+5. Variables already set in your shell, which win over every file.
+
+Keep the token in the Keychain or a password manager, not in a `.env` file;
+see [Keeping the token in a password manager](#keeping-the-token-in-a-password-manager).
 
 Each variable is looked up on its own. So keep a token, its organisation ID
-and `CREDLY_ENV` together in the same file: a token from one file paired
+and `CREDLY_ENV` together in the same place: a token from one place paired
 with an organisation from another fails with a 401 or 403 at best, and is
 confusing at worst.
 
@@ -82,10 +85,48 @@ password: anyone holding it can issue badges in your organisation's name.
 ## Keeping the token in a password manager
 
 A `.env` file holds the token in plain text, where any program running as
-you can read it, and it's a common way for credentials to leak. Credjar
-doesn't need the file: a variable set in the environment wins over every
-`.env`, so a password manager can supply the token to one command at a time,
-and nothing secret is written to disk.
+you can read it, and it's a common way for credentials to leak: into a
+commit, a backup, a shared screen, or an AI assistant that reads the project.
+Credjar doesn't need the file. It reads the macOS Keychain itself, and a
+variable set in the environment wins over every `.env`, so a password manager
+can supply the token to one command at a time and nothing secret is written
+to disk.
+
+### macOS Keychain
+
+Nothing to install and no wrapper to write: Credjar looks its settings up in
+your login Keychain. Store each one as a generic password with the service
+`credjar` and the variable's name as the account. Ending the command with
+`-w` makes `security` prompt for the value, so it never lands in your shell
+history:
+
+```bash
+security add-generic-password -U -s credjar -a CREDLY_API_TOKEN -w
+security add-generic-password -U -s credjar -a CREDLY_ORG_ID -w
+security add-generic-password -U -s credjar -a CREDLY_ENV -w
+```
+
+Add `CREDLY_SANDBOX_API_TOKEN` and `CREDLY_SANDBOX_ORG_ID` the same way if
+you use the sandbox. The organisation ID and `CREDLY_ENV` aren't secret, but
+storing them beside the token keeps the three together, so no `.env` is
+needed at all. `-U` replaces a value that's already there, so the same
+command rotates a token. To remove one:
+
+```bash
+security delete-generic-password -s credjar -a CREDLY_API_TOKEN
+```
+
+Credjar asks the Keychain only for settings that aren't already set. So a
+value in your shell or in any `.env` file still wins: once a setting is in
+the Keychain, delete its line from every `.env`. `credjar check` shows
+whether the settings arrived.
+
+The Keychain encrypts the token and keeps it out of every project directory,
+which is what keeps it away from tools that read files. It is not a prompt
+on every use: any program running as you can ask `security` for it, as
+Credjar does. For that, use 1Password, below.
+
+Set `CREDJAR_NO_KEYCHAIN=1` to stop Credjar reading the Keychain.
 
 ### 1Password
 
@@ -143,8 +184,8 @@ in with `bw login`.
    }
    ```
 
-   Keep `CREDLY_ORG_ID` and `CREDLY_ENV` in `~/.config/credjar/.env`; they
-   aren't secret. The vault stays unlocked in that terminal until you run
+   Keep `CREDLY_ORG_ID` and `CREDLY_ENV` in the Keychain (above) or in
+   `~/.config/credjar/.env`; they aren't secret. The vault stays unlocked in that terminal until you run
    `bw lock` or close it. If more than one item is named `Credjar`, `bw get`
    refuses; use the item's id instead.
 
@@ -152,11 +193,11 @@ Either way, `credjar check` shows whether the token arrived.
 
 ## Keeping the token safe
 
-- Prefer a password manager (above) to a `.env` file.
-- Keep `.env` files out of git. A clone's `.gitignore` already covers `.env`
-  and every `.env.*`.
-- Make the user-level file readable only by you:
-  `chmod 600 ~/.config/credjar/.env`.
+- Keep the token in the Keychain or a password manager (above), never in a
+  `.env` file.
+- If a `.env` file holds anything else, keep it out of git (a clone's
+  `.gitignore` already covers `.env` and every `.env.*`) and make the
+  user-level one readable only by you: `chmod 600 ~/.config/credjar/.env`.
 - Create tokens without delete permission.
 - If a token is ever pasted into a terminal log, a CI transcript or a chat,
   revoke it in Credly and create a new one.
