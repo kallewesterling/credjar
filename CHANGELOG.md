@@ -17,6 +17,11 @@ and version scheme in `CLAUDE.md`.
   plain-Markdown copy of each page beside its HTML (`issuing.md` beside
   `issuing.html`). Every page now has a `description`.
 
+### Changed
+
+- The README no longer repeats the settings table, the token permissions or
+  how to store the token; it links to the Configuration page instead.
+
 ## [0.3.0] - 2026-11-26
 
 ### Added
