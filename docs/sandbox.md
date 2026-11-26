@@ -1,6 +1,7 @@
 ---
 title: The sandbox
 nav_order: 4
+description: Use the Credly sandbox, a separate organisation whose emails reach no recipients, to try issuing and revoking first.
 ---
 
 # The sandbox

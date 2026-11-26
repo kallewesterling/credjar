@@ -1,6 +1,7 @@
 ---
 title: Safety and data handling
 nav_order: 8
+description: How Credjar previews, confirms and records writes, protects the API token, and handles earner data.
 ---
 
 # Safety and data handling

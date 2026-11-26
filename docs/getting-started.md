@@ -1,6 +1,7 @@
 ---
 title: Getting started
 nav_order: 2
+description: Install the credjar command or run it from a clone, add your settings, and check the connection.
 ---
 
 # Getting started
