@@ -4,10 +4,29 @@ Command-line tooling for the Credly API. The sibling of `syncjar`, which does
 the same for Skilljar. The two are laid out alike on purpose, and lessons
 learned in one should be carried to the other.
 
-- `docs/credly-api.md`: every endpoint, the permission it needs, and what the
+- `docs/api-notes.md`: every endpoint, the permission it needs, and what the
   reference says beyond the endpoint names. Read it before adding a call.
 - `docs/plans/`: proposed work. `roadmap.md` lists it in order, with what
   has been done marked as such.
+
+## The documentation site (`docs/`)
+
+`docs/` is a Jekyll site with the Just the Docs theme, published to
+<https://westerling.nu/credjar/> by `.github/workflows/docs.yaml`, as
+syncjar's is. It deploys from `main` only, because it documents the release
+people can install; a docs change reaches the site with the next merge to
+`main`. PRs that touch `docs/` build it without deploying.
+
+- **It is public and generic.** Write for anyone with a Credly
+  organisation: no organisation's names, ids, template names, counts or
+  people. Examples use `example.com` and `courses.example.com`.
+- **Link pages with `{{ site.baseurl }}{% link page.md %}`**, not a bare
+  path. The tag fails the build on a missing page, which is the only link
+  check the site has. GitHub Pages runs Jekyll 3, whose `link` tag does not
+  add `baseurl` itself.
+- **A command change is a docs change.** New options or behaviour go in the
+  command's page and in `docs/reference/commands.md`, in the same PR.
+- `docs/plans/` holds working notes and is excluded from the build.
 
 ## Branches and versions
 
@@ -105,7 +124,7 @@ Filters are `filter[key]=value` (`filterParams()` builds them). The older
 `key::value|key::value` syntax is deprecated; don't use it.
 
 Reference: <https://docs.credly.com/browse/reference>, with an endpoint map
-in `docs/credly-api.md` that also explains how to read it from the command
+in `docs/api-notes.md` that also explains how to read it from the command
 line.
 
 ## CREDLY_ENV is required, never defaulted

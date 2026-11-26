@@ -3,7 +3,7 @@
 Status: ideas, 2026-09-30, updated 2026-10-07. Items that are done say so
 under their heading. Every item comes from a
 full read of the API reference; the facts behind each one are in
-[`../credly-api.md`](../credly-api.md). A larger item gets its own plan, as
+[`../api-notes.md`](../api-notes.md). A larger item gets its own plan, as
 [`replace-and-delete.md`](replace-and-delete.md) does.
 
 Roughly in order of value for the risk.
