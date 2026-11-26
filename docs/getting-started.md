@@ -30,7 +30,7 @@ npm install --global github:kallewesterling/credjar#main
 ```
 
 `main` holds the latest release. To pin one, name its tag instead, for
-example `#v0.2.1`. Then check it works:
+example `#v0.3.0`. Then check it works:
 
 ```bash
 credjar help       # every command, and where settings are read from
@@ -41,7 +41,7 @@ credjar --version
 
 ```bash
 credjar update                  # the latest release
-credjar update --ref v0.2.1     # a specific tag, branch or commit
+credjar update --ref v0.3.0     # a specific tag, branch or commit
 credjar update --force          # reinstall even if it's already installed
 ```
 
@@ -65,7 +65,6 @@ command, leaving you no `credjar update` to recover with.
 git clone https://github.com/kallewesterling/credjar.git
 cd credjar
 npm install
-cp .env-example .env
 ```
 
 Run commands as `npm run <command>`, with options after `--`:
@@ -95,18 +94,20 @@ CREDLY_ENV=production
 to find each one, and how to create the token so that it **can't delete
 anything**. Do that before you create it.
 
-The safest place for the token is a password manager, which supplies it to
-each command and leaves nothing on disk; see
-[Keeping the token in a password manager]({{ site.baseurl }}{% link configuration.md %}#keeping-the-token-in-a-password-manager).
-Otherwise, for the global command, use a user-level file that only you can
-read:
+Don't put them in a `.env` file. On a Mac, store them in the Keychain, where
+Credjar finds them by itself. Each command prompts for the value:
 
 ```bash
-mkdir -p ~/.config/credjar
-touch ~/.config/credjar/.env && chmod 600 ~/.config/credjar/.env
+security add-generic-password -U -s credjar -a CREDLY_API_TOKEN -w
+security add-generic-password -U -s credjar -a CREDLY_ORG_ID -w
+security add-generic-password -U -s credjar -a CREDLY_ENV -w
 ```
 
-In a clone, a `.env` at the repository root works too, and is gitignored.
+Elsewhere, or for a prompt on every use, have a password manager such as
+1Password supply the token to each command; see
+[Keeping the token in a password manager]({{ site.baseurl }}{% link configuration.md %}#keeping-the-token-in-a-password-manager).
+`.env` files still work, but hold the token in plain text where any program
+running as you can read it.
 
 ## Check the connection
 

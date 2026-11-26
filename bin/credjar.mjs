@@ -59,8 +59,9 @@ ${heading('Commands')}`);
   for (const name of commands.keys()) console.log(`  ${name}`);
   console.log(`
 ${heading('Credentials')}
-  Read from .env in the current directory, then ${IS_CHECKOUT ? 'the clone\'s .env, then ' : ''}${userEnv}.
-  A variable already set in the shell wins over all of them.
+  Read from the shell, then .env in the current directory, then ${IS_CHECKOUT ? 'the clone\'s .env, then ' : ''}${userEnv},
+  then the macOS Keychain (service "credjar"). The first one set wins.
+  Keep the token in the Keychain or a password manager, not in a .env file.
   Exports and audit files go to public/data/ under ${IS_CHECKOUT ? 'the clone' : 'the current directory'}.`);
 }
 

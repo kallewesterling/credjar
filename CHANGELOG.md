@@ -10,6 +10,21 @@ and version scheme in `CLAUDE.md`.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-26
+
+### Added
+
+- Settings can come from the macOS Keychain. Each `CREDLY_*` setting is
+  looked up as a generic password with the service `credjar` and the
+  variable's name as the account, only when it isn't set already, so the
+  shell and any `.env` still win. `CREDJAR_NO_KEYCHAIN=1` turns it off.
+
+### Changed
+
+- The docs, `credjar help`, `.env-example` and the "not set" errors now
+  steer the token to the Keychain or a password manager and away from
+  `.env` files.
+
 ## [0.2.1] - 2026-11-26
 
 ### Added
@@ -80,7 +95,8 @@ against production.
 - `package.json` is marked `private`, so `npm publish` refuses to run, and
   `.gitignore` covers every `.env.*` file.
 
-[Unreleased]: https://github.com/kallewesterling/credjar/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/kallewesterling/credjar/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/kallewesterling/credjar/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kallewesterling/credjar/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kallewesterling/credjar/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kallewesterling/credjar/releases/tag/v0.1.0
